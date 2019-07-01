@@ -1,0 +1,13 @@
+*.pyo
+*.pyc
+__pycache__
+*.json
+*.log
+*.sql
+*.ipynb
+*.csv
+*.xlsx
+*.twb
+*.twbx
+*.twbr
+
