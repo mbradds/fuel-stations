@@ -42,13 +42,15 @@ def get_stations(file_name='fuel_stations.csv'):
     return(df)
     
 
-class Vehicle_Route:
+class Vehicle_Network:
     '''Fuel Types: ELEC - Electric vehicle, LPG - Propane vehicle, BD - Biodiesel, CNG - compresses natural gas 
+    this creates a comlete graph, meaning that all vehicle routes are possible. This network will be pruned when the 
+    user enters in a range for their vehicle. I think this may be faster, especially if each Vehicle_Network is saved and imported
+    when needed
     
     '''
     
-    def __init__(self,refill_locations,vehicle_range,vehicle_fuel):
-        self.vehicle_range = vehicle_range #vehicle range is used to "prune" the graph to ensure that only possible paths are considered.
+    def __init__(self,refill_locations,vehicle_fuel):
         self.vehicle_fuel = vehicle_fuel #user must select one fuel type.
         self.refill_locations = refill_locations #the data from the NREL API
         #self.refill_locations = self.refill_locations[self.refill_locations['fuel_type_code']==self.vehicle_fuel]
@@ -100,19 +102,36 @@ class Vehicle_Route:
                     lat1,long1 = self.G.node[node1]['lat'],self.G.node[node1]['long']
                     lat2,long2 = self.G.node[node2]['lat'],self.G.node[node2]['long']
                     distance = self.haversine(long1,lat1,long2,lat2)
-                    
-                    if distance <= self.vehicle_range:
-                        self.G.add_edge(node1,node2,weight=distance)
+                    #there is no range requirement
+                    self.G.add_edge(node1,node2,weight=distance)
                         
         #TODO: once the graphs are created, they should be pickled, and then pruned later. This will make it much faster
         return(self.G)
 
+class Vehicle_Route:
+    
+    def __init__(self,G,vehicle_range):
+        self.vehicle_range = vehicle_range #user must select one fuel type.
+        self.G = G #this is the fully connected graph. Need to 'prune it'
+    
+    def prune(self):
+        None
+        
+        for nodes in G:
+            
+            for neighbors in G[nodes]:
+                
+                if neighbors['weight'] > self.vehicle_range:
+                    #remove the edge!
+                else:
+                    #keep the edge
+    
 
 #%%
 #TODO: graph the network...
 if __name__ == "__main__":
     df = get_stations()
-    path = Vehicle_Route(refill_locations=df,vehicle_range=100,vehicle_fuel = 'ELEC')
+    path = Vehicle_Network(refill_locations=df,vehicle_fuel = 'ELEC')
     route  = path.create_graph()
     
     
