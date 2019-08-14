@@ -15,7 +15,8 @@ headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleW
 
 class Data:
     
-    def __init__(self,new_data=False,nrel_data='fuel_stations.csv'):
+    def __init__(self,vehicle_fuel,new_data=False,nrel_data='fuel_stations.csv'):
+        self.vehicle_fuel = vehicle_fuel
         self.new_data = new_data
         self.nrel_data = nrel_data
 
@@ -66,11 +67,11 @@ class Data:
             Data.delete_file(self.nrel_data)
             #also delete all of the graph pickles!!
         df = self.get_stations()
-        #create all the graphs!
+        #limit the data to the appropriate fuel type
+        df = df[df['fuel_type_code']==self.vehicle_fuel]
         return(df)
             
             
-    
 class VehicleNetwork(Data):
     
     '''
@@ -80,25 +81,26 @@ class VehicleNetwork(Data):
     when needed
     '''
     
-    #limits the amount of stations for testing purposes.
+    #limits the amount of stations for testing only.
     sample_stations = 500
     sample_province = 'AB'
     
-    def __init__(self,vehicle_fuel,vehicle_range,limit,new_data=False):
-        Data.__init__(self,new_data=new_data)
+    max_range = 500 #the user should not change this variable. This reduces the complexity of the system.
+    
+    def __init__(self,vehicle_fuel,vehicle_range=0,limit=False,new_data=False):
+        Data.__init__(self,vehicle_fuel,new_data=new_data)
         self.vehicle_fuel = vehicle_fuel #user must select one fuel type.
         self.refill_locations = self.station_data() #from nrel api
         self.limit = limit
-        self.vehicle_range = vehicle_range
-        #self.refill_locations = self.refill_locations[self.refill_locations['fuel_type_code']==self.vehicle_fuel]
-        #self.G = nx.Graph() 
+        self.vehicle_range = vehicle_range #user sets the range for their vehicle
         #add more variables to filter data if needed
     
-        #from https://stackoverflow.com/questions/4913349/haversine-formula-in-python-bearing-and-distance-between-two-gps-points
+    #from https://stackoverflow.com/questions/4913349/haversine-formula-in-python-bearing-and-distance-between-two-gps-points
     def haversine(self,lon1, lat1, lon2, lat2):
         """
         Calculate the great circle distance between two points 
         on the earth (specified in decimal degrees)
+        This is set to km for default
         """
         # convert decimal degrees to radians 
         lon1, lat1, lon2, lat2 = map(radians, [lon1, lat1, lon2, lat2])
@@ -128,6 +130,7 @@ class VehicleNetwork(Data):
             G = nx.read_gpickle(file_name)
             print('read pickle object: '+file_name)
         else:
+            #ceates a complete graph if there isnt one already
             G = nx.Graph()
             for index,row in self.refill_locations.iterrows():
                 
@@ -154,11 +157,15 @@ class VehicleNetwork(Data):
                         lat2,long2 = G.node[node2]['lat'],G.node[node2]['long']
                         distance = self.haversine(long1,lat1,long2,lat2)
                         #there is no range requirement
-                        G.add_edge(node1,node2,weight=distance)
+                        
+                        if distance > VehicleNetwork.max_range:
+                            None #the vehicle will cant conceivably make it from node 1 to node 2
+                        else:    
+                            G.add_edge(node1,node2,weight=distance)
                             
             #pickle the graph once it is created
             nx.write_gpickle(G,file_name)
-            print('created new pickle object: '+file_name)
+            print('created new pickle object: '+file_name+' with max range '+str(self.max_range))
             
         return(G)
     
@@ -193,18 +200,38 @@ class VehicleNetwork(Data):
             return(n)
         
         source,target = get_random_location(start),get_random_location(end)
-        #TODO: an error gets raised if there is no viable route..
-        path = nx.shortest_path(G,source=source,target=target)
+        #TODO: an error gets raised if there is no viable route.. Implement an optimizer that returns the vehicle range that makes the route possible!
+        try:
+            path = nx.shortest_path(G,source=source,target=target)
+        except:
+            raise
+            #TODO: raise a warning that the route didnt work, and then inform the user that a new path is being calculated with a higher range!
+            
+            
         #add the "gas station" algorithm to see if any of the nodes (stations) can be passed over. This shouldnt be the case
-    
         return(path)
     
+    @classmethod
+    def create_pickes(self,max_range = 500):
+        '''
+        convenience method for creating all pickles at once
+        '''
+        VehicleNetwork.max_range = max_range
+        fuel_options = ['ELEC','LPG','CNG']
+        
+        for fuel in fuel_options:
+            network = VehicleNetwork(vehicle_fuel=fuel)
+            network.create_graph()
+        
 
 #%%
 if __name__ == "__main__":
+    fuel_options = ['ELEC','LPG','CNG']
     #TODO: sensitivity test to determine the min range needed to go across Canada
-    path = VehicleNetwork(vehicle_fuel = 'ELEC',vehicle_range=200,limit=False)
-    route = path.shortest_path(start='Vancouver',end='Halifax')
+    #VehicleNetwork.create_pickes()
     
-
-#%%
+        
+    path = VehicleNetwork(vehicle_fuel = 'ELEC',vehicle_range=386,limit=False)
+    route = path.shortest_path(start='Vancouver',end='Thunder Bay')
+    
+    
