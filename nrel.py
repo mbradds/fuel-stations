@@ -8,10 +8,9 @@ from math import radians, cos, sin, asin, sqrt
 import pickle
 import matplotlib.pylab as plt
 from pandas.plotting import register_matplotlib_converters
+import warnings
 headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'}
 #%%
-#TODO: make all data functions into a class with the ability to set new data.
-#Vehicle_Network can inherit data and create a new complete graph if neccecary
 
 class Data:
     
@@ -71,7 +70,7 @@ class Data:
         df = df[df['fuel_type_code']==self.vehicle_fuel]
         return(df)
             
-            
+#TODO: make the graph (G) an intance variable. This will make it easier to modify the graph range in a VehicleNetwork method
 class VehicleNetwork(Data):
     
     '''
@@ -86,6 +85,7 @@ class VehicleNetwork(Data):
     sample_province = 'AB'
     
     max_range = 500 #the user should not change this variable. This reduces the complexity of the system.
+    #500 km is a reasonable max range based on NEB analysis: https://www.neb-one.gc.ca/nrg/ntgrtd/mrkt/snpsht/2019/06-04lvrglctrcvhcl-eng.html
     
     def __init__(self,vehicle_fuel,vehicle_range=0,limit=False,new_data=False):
         Data.__init__(self,vehicle_fuel,new_data=new_data)
@@ -115,10 +115,13 @@ class VehicleNetwork(Data):
     
 
     def create_graph(self):
+        '''
+        creates a semi-complete graph if there isnt already one available in binary form. The graph connectivity is limited by the maximum range.
+        A higher max range allows you to view hypothetical vehicle routes that are not available with current EV technology, but it makes the 
+        optimal path calculation much slower.
+        '''
         
-        #TODO: filter data and check for errors at this point
-        #add the graph nodes
-        
+        #TODO: remove limit instance variable after testing is complete!
         if self.limit == True:
             self.refill_locations = self.refill_locations[self.refill_locations['state']==VehicleNetwork.sample_province]
             #self.refill_locations = self.refill_locations.sample(n=Vehicle_Network.sample_stations)
@@ -159,7 +162,7 @@ class VehicleNetwork(Data):
                         #there is no range requirement
                         
                         if distance > VehicleNetwork.max_range:
-                            None #the vehicle will cant conceivably make it from node 1 to node 2
+                            None #the vehicle cant conceivably make it from node 1 to node 2
                         else:    
                             G.add_edge(node1,node2,weight=distance)
                             
@@ -207,8 +210,9 @@ class VehicleNetwork(Data):
             raise
             #TODO: raise a warning that the route didnt work, and then inform the user that a new path is being calculated with a higher range!
             
-            
         #add the "gas station" algorithm to see if any of the nodes (stations) can be passed over. This shouldnt be the case
+        #Algorithm example: https://www.coursera.org/lecture/algorithmic-toolbox/car-fueling-8nQK8
+        #just because a car goes through a node, does not neccecarily mean that it needs to fuel!
         return(path)
     
     @classmethod
@@ -230,7 +234,6 @@ if __name__ == "__main__":
     #TODO: sensitivity test to determine the min range needed to go across Canada
     #VehicleNetwork.create_pickes()
     
-        
     path = VehicleNetwork(vehicle_fuel = 'ELEC',vehicle_range=386,limit=False)
     route = path.shortest_path(start='Vancouver',end='Thunder Bay')
     
