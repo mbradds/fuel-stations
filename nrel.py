@@ -14,10 +14,15 @@ headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleW
 
 class Data:
     
-    def __init__(self,vehicle_fuel,new_data=False,nrel_data='fuel_stations.csv'):
+    max_range = 500
+    sample_stations = 500
+    sample_province = 'AB'
+    
+    def __init__(self,vehicle_fuel,limit,new_data=False,nrel_data='fuel_stations.csv'):
         self.vehicle_fuel = vehicle_fuel
         self.new_data = new_data
         self.nrel_data = nrel_data
+        self.limit = limit
 
     @staticmethod
     def config_file(config_file):
@@ -69,31 +74,6 @@ class Data:
         #limit the data to the appropriate fuel type
         df = df[df['fuel_type_code']==self.vehicle_fuel]
         return(df)
-            
-#TODO: make the graph (G) an intance variable. This will make it easier to modify the graph range in a VehicleNetwork method
-class VehicleNetwork(Data):
-    
-    '''
-    Fuel Types: ELEC - Electric vehicle, LPG - Propane vehicle, BD - Biodiesel, CNG - compresses natural gas 
-    this creates a comlete graph, meaning that all vehicle routes are possible. This network will be pruned when the 
-    user enters in a range for their vehicle. I think this may be faster, especially if each Vehicle_Network is saved and imported
-    when needed
-    '''
-    
-    #limits the amount of stations for testing only.
-    sample_stations = 500
-    sample_province = 'AB'
-    
-    max_range = 500 #the user should not change this variable. This reduces the complexity of the system.
-    #500 km is a reasonable max range based on NEB analysis: https://www.neb-one.gc.ca/nrg/ntgrtd/mrkt/snpsht/2019/06-04lvrglctrcvhcl-eng.html
-    
-    def __init__(self,vehicle_fuel,vehicle_range=0,limit=False,new_data=False):
-        Data.__init__(self,vehicle_fuel,new_data=new_data)
-        self.vehicle_fuel = vehicle_fuel #user must select one fuel type.
-        self.refill_locations = self.station_data() #from nrel api
-        self.limit = limit
-        self.vehicle_range = vehicle_range #user sets the range for their vehicle
-        #add more variables to filter data if needed
     
     #from https://stackoverflow.com/questions/4913349/haversine-formula-in-python-bearing-and-distance-between-two-gps-points
     def haversine(self,lon1, lat1, lon2, lat2):
@@ -112,7 +92,6 @@ class VehicleNetwork(Data):
         c = 2 * asin(sqrt(a)) 
         r = 6371 # Radius of earth in kilometers. Use 3956 for miles, 6371 for km
         return (c * r)
-    
 
     def create_graph(self):
         '''
@@ -172,54 +151,6 @@ class VehicleNetwork(Data):
             
         return(G)
     
-    def vehicle_route(self):
-        
-        G = self.create_graph()
-        #nx.draw(G)
-        
-        remove_list = []
-        for paths in G.edges(data=True):
-            
-            n1 = paths[0]
-            n2 = paths[1]
-            distance = paths[2]['weight']
-
-            if distance > self.vehicle_range:
-                remove_list.append(tuple((n1,n2)))
-        
-        G.remove_edges_from(remove_list)
-
-        #nx.draw(G)
-        return(G)
-    
-    def shortest_path(self,start,end):
-        
-        G  = self.vehicle_route()
-    
-        def get_random_location(loc):
-            locations = self.refill_locations[self.refill_locations['city']==loc].copy()
-            location = locations.sample(n=1) #should be one row of a dataframe
-            n = str(location.iloc[0]['city'])+'_'+str(location.iloc[0]['zip'])
-            return(n)
-        
-        source,target = get_random_location(start),get_random_location(end)
-        print('source: '+source+' target: '+target)
-        #TODO: an error gets raised if there is no viable route.. Implement an optimizer that returns the vehicle range that makes the route possible!
-        try:
-            path = nx.shortest_path(G,source=source,target=target)
-        except:
-            raise
-            #TODO: raise a warning that the route didnt work, and then inform the user that a new path is being calculated with a higher range!
-            
-        #add the "gas station" algorithm to see if any of the nodes (stations) can be passed over. This shouldnt be the case
-        #Algorithm example: https://www.coursera.org/lecture/algorithmic-toolbox/car-fueling-8nQK8
-        #just because a car goes through a node, does not neccecarily mean that it needs to fuel!
-        
-        
-        
-        
-        return(path)
-    
     @classmethod
     def create_pickes(self,max_range = 500):
         '''
@@ -231,21 +162,83 @@ class VehicleNetwork(Data):
         for fuel in fuel_options:
             network = VehicleNetwork(vehicle_fuel=fuel)
             network.create_graph()
+    
+            
+#TODO: make the graph (G) an intance variable. This will make it easier to modify the graph range in a VehicleNetwork method
+class VehicleNetwork(Data):
+    
+    '''
+    Fuel Types: ELEC - Electric vehicle, LPG - Propane vehicle, BD - Biodiesel, CNG - compresses natural gas 
+    this creates a comlete graph, meaning that all vehicle routes are possible. This network will be pruned when the 
+    user enters in a range for their vehicle. I think this may be faster, especially if each Vehicle_Network is saved and imported
+    when needed
+    '''
+    
+    
+    def __init__(self,vehicle_fuel,vehicle_range=0,new_data=False):
+        Data.__init__(self,vehicle_fuel,limit=False,new_data=new_data)
+        self.vehicle_fuel = vehicle_fuel #user must select one fuel type.
+        self.refill_locations = self.station_data() #from nrel api
+        self.vehicle_range = vehicle_range #user sets the range for their vehicle
+        self.G = self.create_graph()
+        #add more variables to filter data if needed
+    
+
+    def view_graph(self):
+        return(self.G)
+    
+    def vehicle_route(self):
+        
+        remove_list = []
+        for paths in self.G.edges(data=True):
+            
+            n1 = paths[0]
+            n2 = paths[1]
+            distance = paths[2]['weight']
+
+            if distance > self.vehicle_range:
+                remove_list.append(tuple((n1,n2)))
+        
+        self.G.remove_edges_from(remove_list)
+
+        return(self.G)
+    
+    def shortest_path(self,start,end):
+        
+        self.G  = self.vehicle_route()
+    
+        def get_random_location(loc):
+            locations = self.refill_locations[self.refill_locations['city']==loc].copy()
+            location = locations.sample(n=1) #should be one row of a dataframe
+            n = str(location.iloc[0]['city'])+'_'+str(location.iloc[0]['zip'])
+            return(n)
+        
+        source,target = get_random_location(start),get_random_location(end)
+        print('source: '+source+' target: '+target)
+        #TODO: an error gets raised if there is no viable route.. Implement an optimizer that returns the vehicle range that makes the route possible!
+        try:
+            path = nx.shortest_path(self.G,source=source,target=target)
+        except:
+            raise
+            #TODO: raise a warning that the route didnt work, and then inform the user that a new path is being calculated with a higher range!
+            
+        #add the "gas station" algorithm to see if any of the nodes (stations) can be passed over. This shouldnt be the case
+        #Algorithm example: https://www.coursera.org/lecture/algorithmic-toolbox/car-fueling-8nQK8
+        #just because a car goes through a node, does not neccecarily mean that it needs to fuel!
+        
+        
+        return(path)
+    
         
 
 #%%
 if __name__ == "__main__":
-    fuel_options = ['ELEC','LPG','CNG']
-    #TODO: sensitivity test to determine the min range needed to go across Canada
-    #VehicleNetwork.create_pickes()
-    path = VehicleNetwork(vehicle_fuel = 'ELEC',vehicle_range=200,limit=False)
-    #path should be a networkx object. Customized...
-    #i = 0
-    #while i <= 5:
-        #path = VehicleNetwork(vehicle_fuel = 'ELEC',vehicle_range=200,limit=False)
-    route = path.shortest_path(start='Vancouver',end='Halifax')
-        #i = i+1
-        #print(i)
-        #TODO: why is this reading the pickle in each time. Load the pickle in the path object...
+
     
+    path = VehicleNetwork(vehicle_fuel = 'ELEC',vehicle_range=200)
+
+    G = path.view_graph()
+
+    #route = path.shortest_path(start='Vancouver',end='Halifax')
+
     
