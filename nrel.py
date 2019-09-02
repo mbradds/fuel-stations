@@ -6,7 +6,7 @@ import json
 import networkx as nx
 from math import radians, cos, sin, asin, sqrt
 import pickle
-import matplotlib.pylab as plt
+#import matplotlib.pylab as plt
 from pandas.plotting import register_matplotlib_converters
 import warnings
 headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'}
@@ -199,10 +199,11 @@ class VehicleNetwork(Data):
         def get_random_location(loc):
             locations = self.refill_locations[self.refill_locations['city']==loc].copy()
             location = locations.sample(n=1) #should be one row of a dataframe
-            n = location.iloc[0]['city']+'_'+location.iloc[0]['zip']
+            n = str(location.iloc[0]['city'])+'_'+str(location.iloc[0]['zip'])
             return(n)
         
         source,target = get_random_location(start),get_random_location(end)
+        print('source: '+source+' target: '+target)
         #TODO: an error gets raised if there is no viable route.. Implement an optimizer that returns the vehicle range that makes the route possible!
         try:
             path = nx.shortest_path(G,source=source,target=target)
@@ -213,6 +214,10 @@ class VehicleNetwork(Data):
         #add the "gas station" algorithm to see if any of the nodes (stations) can be passed over. This shouldnt be the case
         #Algorithm example: https://www.coursera.org/lecture/algorithmic-toolbox/car-fueling-8nQK8
         #just because a car goes through a node, does not neccecarily mean that it needs to fuel!
+        
+        
+        
+        
         return(path)
     
     @classmethod
@@ -233,8 +238,14 @@ if __name__ == "__main__":
     fuel_options = ['ELEC','LPG','CNG']
     #TODO: sensitivity test to determine the min range needed to go across Canada
     #VehicleNetwork.create_pickes()
-    
-    path = VehicleNetwork(vehicle_fuel = 'ELEC',vehicle_range=386,limit=False)
-    route = path.shortest_path(start='Vancouver',end='Thunder Bay')
+    path = VehicleNetwork(vehicle_fuel = 'ELEC',vehicle_range=200,limit=False)
+    #path should be a networkx object. Customized...
+    #i = 0
+    #while i <= 5:
+        #path = VehicleNetwork(vehicle_fuel = 'ELEC',vehicle_range=200,limit=False)
+    route = path.shortest_path(start='Vancouver',end='Halifax')
+        #i = i+1
+        #print(i)
+        #TODO: why is this reading the pickle in each time. Load the pickle in the path object...
     
     
