@@ -15,6 +15,7 @@ headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleW
 class Data:
     
     max_range = 500
+    #look at adding a min distance. Stations that are only a few km probably dont need to be connected
     sample_stations = 500
     sample_province = 'AB'
     
@@ -130,7 +131,8 @@ class Data:
                            address = row['street_address'])
             
             #add the graph edges
-            #This probably runs in n^2 time. Maybe look for a better wau to add edges, only when certain conditions are met...
+            #This probably runs in n^2 time. Maybe look for a better way to add edges, only when certain conditions are met...
+            #look at using a hash table here
             for node1 in G:
                 for node2 in G:
                     if node1 != node2 and not G.has_edge(node1,node2):
@@ -205,8 +207,9 @@ class VehicleNetwork(Data):
     
     def shortest_path(self,start,end):
         
-        self.G  = self.vehicle_route()
-    
+        #use getters and setters for this!
+        self.G = self.vehicle_route()
+        
         def get_random_location(loc):
             locations = self.refill_locations[self.refill_locations['city']==loc].copy()
             location = locations.sample(n=1) #should be one row of a dataframe
@@ -226,19 +229,24 @@ class VehicleNetwork(Data):
         #Algorithm example: https://www.coursera.org/lecture/algorithmic-toolbox/car-fueling-8nQK8
         #just because a car goes through a node, does not neccecarily mean that it needs to fuel!
         
-        
         return(path)
     
         
-
 #%%
 if __name__ == "__main__":
 
     
-    path = VehicleNetwork(vehicle_fuel = 'ELEC',vehicle_range=200)
+    path = VehicleNetwork(vehicle_fuel = 'ELEC',vehicle_range=250)
+    
+    #G = path.view_graph()
+    #G = path.vehicle_route()
+ 
+    route = path.shortest_path(start='Vancouver',end='Halifax')
 
-    G = path.view_graph()
-
-    #route = path.shortest_path(start='Vancouver',end='Halifax')
-
+#%%
+    
+    
+    
+    
+    
     
