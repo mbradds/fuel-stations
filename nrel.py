@@ -13,17 +13,29 @@ headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleW
 #%%
 
 class Data:
+    '''
+    NREL API documentation: https://developer.nrel.gov/docs/transportation/alt-fuel-stations-v1/
+    '''
     
     max_range = 500
-    #look at adding a min distance. Stations that are only a few km probably dont need to be connected
+    min_range = 0
     sample_stations = 500
     sample_province = 'AB'
     
-    def __init__(self,vehicle_fuel,limit,new_data=False,nrel_data='fuel_stations.csv'):
+    def __init__(self,vehicle_fuel,region,limit,new_data=False,nrel_data='fuel_stations.csv'):
         self.vehicle_fuel = vehicle_fuel
+        self.region = region
         self.new_data = new_data
         self.nrel_data = nrel_data
         self.limit = limit
+        self.country_options = ['CA','US']
+    
+    
+    def FileName(self):
+        return(self.vehicle_fuel+'_'+self.region+'_'+'Max_'+str(Data.max_range)+'_'+'Min_'+str(Data.min_range)+'.pickle')
+        
+    def __str__(self):
+        return('')
 
     @staticmethod
     def config_file(config_file):
@@ -38,8 +50,9 @@ class Data:
             raise
             
     @staticmethod
-    def api_url(key,url='https://developer.nrel.gov/api/alt-fuel-stations/v1.json?country=CA&api_key=YOUR_KEY_HERE'):
+    def api_url(key,country,url='https://developer.nrel.gov/api/alt-fuel-stations/v1.json?country=CO&api_key=YOUR_KEY_HERE'):
         url = url.replace('YOUR_KEY_HERE',key)
+        url = url.replace('CO',country)
         return(url)
     
     @staticmethod
@@ -50,16 +63,85 @@ class Data:
     
     def get_stations(self):
         if os.path.isfile(self.nrel_data):
-            df = pd.read_csv(self.nrel_data)
-            print('read file from: '+os.getcwd())
+            stations = pd.read_csv(self.nrel_data,dtype={'access_code': 'object', 
+                                                         'access_days_time': 'object', 
+                                                         'access_detail_code': 'object', 
+                                                         'cards_accepted': 'object', 
+                                                         'date_last_confirmed': 'object', 
+                                                         'expected_date': 'object', 
+                                                         'fuel_type_code': 'object', 
+                                                         'groups_with_access_code': 'object', 
+                                                         'id': 'int64', 
+                                                         'open_date': 'object', 
+                                                         'owner_type_code': 'object', 
+                                                         'status_code': 'object', 
+                                                         'station_name': 'object', 
+                                                         'station_phone': 'object', 
+                                                         'updated_at': 'object', 
+                                                         'facility_type': 'object', 
+                                                         'geocode_status': 'object', 
+                                                         'latitude': 'float64', 
+                                                         'longitude': 'float64', 
+                                                         'city': 'object', 
+                                                         'intersection_directions': 'object', 
+                                                         'plus4': 'float64', 
+                                                         'state': 'object', 
+                                                         'street_address': 'object', 
+                                                         'zip': 'object', 
+                                                         'country': 'object', 
+                                                         'bd_blends': 'object', 
+                                                         'cng_dispenser_num': 'float64', 
+                                                         'cng_fill_type_code': 'object', 
+                                                         'cng_psi': 'object', 
+                                                         'cng_renewable_source': 'object', 
+                                                         'cng_total_compression': 'float64', 
+                                                         'cng_total_storage': 'float64', 
+                                                         'cng_vehicle_class': 'object', 
+                                                         'e85_blender_pump': 'object', 
+                                                         'e85_other_ethanol_blends': 'object', 
+                                                         'ev_connector_types': 'object', 
+                                                         'ev_dc_fast_num': 'float64', 
+                                                         'ev_level1_evse_num': 'float64', 
+                                                         'ev_level2_evse_num': 'float64', 
+                                                         'ev_network': 'object', 
+                                                         'ev_network_web': 'object', 
+                                                         'ev_other_evse': 'object', 
+                                                         'ev_pricing': 'object', 
+                                                         'ev_renewable_source': 'object', 
+                                                         'hy_is_retail': 'object', 
+                                                         'hy_pressures': 'object', 
+                                                         'hy_standards': 'object', 
+                                                         'hy_status_link': 'object', 
+                                                         'lng_renewable_source': 'float64', 
+                                                         'lng_vehicle_class': 'object', 
+                                                         'lpg_primary': 'object', 
+                                                         'lpg_nozzle_types': 'object', 
+                                                         'ng_fill_type_code': 'object', 
+                                                         'ng_psi': 'object', 
+                                                         'ng_vehicle_class': 'object', 
+                                                         'access_days_time_fr': 'object', 
+                                                         'intersection_directions_fr': 'object', 
+                                                         'bd_blends_fr': 'float64', 
+                                                         'groups_with_access_code_fr': 'object', 
+                                                         'ev_pricing_fr': 'object', 
+                                                         'ev_network_ids': 'object', 
+                                                         'federal_agency': 'object'})
+            #print('read file from: '+os.getcwd())
         else:
             key = Data.config_file('api_key.json')['key']
-            url = Data.api_url(key)
-            df = Data.request_api(url)
-            df.to_csv(self.nrel_data,index=False)
-            print('api request: '+str(url))
+            #get both countries
+            country_frames = []
+            
+            for country in self.country_options:
+                url = Data.api_url(key,country)
+                df = Data.request_api(url)
+                country_frames.append(df)
+                print('api request: '+str(url))
+            
+            stations = pd.concat(country_frames,axis=0,sort=False,ignore_index=True)
+            stations.to_csv(self.nrel_data,index=False)
         
-        return(df)
+        return(stations)
     
     @staticmethod
     def delete_file(name):
@@ -74,6 +156,10 @@ class Data:
         df = self.get_stations()
         #limit the data to the appropriate fuel type
         df = df[df['fuel_type_code']==self.vehicle_fuel]
+        #get the chosen region
+        if self.region != 'all':
+            df = df[df['country']==self.region]
+        
         return(df)
     
     #from https://stackoverflow.com/questions/4913349/haversine-formula-in-python-bearing-and-distance-between-two-gps-points
@@ -102,12 +188,14 @@ class Data:
         '''
         
         #TODO: remove limit instance variable after testing is complete!
-        if self.limit == True:
-            self.refill_locations = self.refill_locations[self.refill_locations['state']==VehicleNetwork.sample_province]
+        #if self.limit == True:
+        #    self.refill_locations = self.refill_locations[self.refill_locations['state']==VehicleNetwork.sample_province]
             #self.refill_locations = self.refill_locations.sample(n=Vehicle_Network.sample_stations)
             
 
-        file_name = self.vehicle_fuel+'.pickle'
+        #file_name = self.vehicle_fuel+'.pickle'
+        file_name = self.FileName()
+        refill_locations = self.station_data()        
         
         if os.path.isfile(file_name):
             G = nx.read_gpickle(file_name)
@@ -115,7 +203,7 @@ class Data:
         else:
             #ceates a complete graph if there isnt one already
             G = nx.Graph()
-            for index,row in self.refill_locations.iterrows():
+            for index,row in refill_locations.iterrows():
                 
                 #TODO: add more descriptors (columns) to the graph if neccecary
                 G.add_node(str(row['city'])+'_'+str(row['zip']),
@@ -142,7 +230,7 @@ class Data:
                         distance = self.haversine(long1,lat1,long2,lat2)
                         #there is no range requirement
                         
-                        if distance > VehicleNetwork.max_range:
+                        if distance > Data.max_range or distance < Data.min_range:
                             None #the vehicle cant conceivably make it from node 1 to node 2
                         else:    
                             G.add_edge(node1,node2,weight=distance)
@@ -154,16 +242,16 @@ class Data:
         return(G)
     
     @classmethod
-    def create_pickes(self,max_range = 500):
+    def create_pickes(self):
         '''
         convenience method for creating all pickles at once
         '''
-        VehicleNetwork.max_range = max_range
-        fuel_options = ['ELEC','LPG','CNG']
+        fuel_options = ['ELEC','LPG','CNG'] #TODO: add fuel_options to self
         
         for fuel in fuel_options:
-            network = VehicleNetwork(vehicle_fuel=fuel)
-            network.create_graph()
+            for country in self.country_options:
+                network = Data(vehicle_fuel=fuel,region=country)
+                network.create_graph()
     
             
 #TODO: make the graph (G) an intance variable. This will make it easier to modify the graph range in a VehicleNetwork method
@@ -177,17 +265,25 @@ class VehicleNetwork(Data):
     '''
     
     
-    def __init__(self,vehicle_fuel,vehicle_range=0,new_data=False):
-        Data.__init__(self,vehicle_fuel,limit=False,new_data=new_data)
+    def __init__(self,vehicle_fuel,region='CA',vehicle_range=0,new_data=False):
+        Data.__init__(self,vehicle_fuel,region,limit=False,new_data=new_data)
         self.vehicle_fuel = vehicle_fuel #user must select one fuel type.
         self.refill_locations = self.station_data() #from nrel api
         self.vehicle_range = vehicle_range #user sets the range for their vehicle
-        self.G = self.create_graph()
+        self.G = self.create_graph() #read in the graph
+        self.refill_locations = self.station_data() #read in the df
         #add more variables to filter data if needed
     
 
     def view_graph(self):
         return(self.G)
+    
+    def view_df(self):
+        return(self.refill_locations)
+        
+    def source_destination(self):
+        #TODO: move the source/destination checking to the first step! This will make it faster...
+        return(None)
     
     def vehicle_route(self):
         
@@ -212,12 +308,17 @@ class VehicleNetwork(Data):
         
         def get_random_location(loc):
             locations = self.refill_locations[self.refill_locations['city']==loc].copy()
+            #raise a warning if the size of locations == 0. This means there isnt a station in that city
+            if len(locations) == 0:
+                warnings.simplefilter('error')
+                warnings.warn('There are no '+self.vehicle_fuel+' stations '+'in '+loc)
+                
             location = locations.sample(n=1) #should be one row of a dataframe
             n = str(location.iloc[0]['city'])+'_'+str(location.iloc[0]['zip'])
             return(n)
         
         source,target = get_random_location(start),get_random_location(end)
-        print('source: '+source+' target: '+target)
+        
         #TODO: an error gets raised if there is no viable route.. Implement an optimizer that returns the vehicle range that makes the route possible!
         try:
             path = nx.shortest_path(self.G,source=source,target=target)
@@ -234,19 +335,16 @@ class VehicleNetwork(Data):
         
 #%%
 if __name__ == "__main__":
-
+        
+    path = VehicleNetwork(vehicle_fuel = 'LPG',vehicle_range=250)
     
-    path = VehicleNetwork(vehicle_fuel = 'ELEC',vehicle_range=250)
-    
+    #df = path.view_df()
     #G = path.view_graph()
     #G = path.vehicle_route()
  
     route = path.shortest_path(start='Vancouver',end='Halifax')
 
 #%%
-    
-    
-    
-    
+
     
     
