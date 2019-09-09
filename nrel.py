@@ -274,17 +274,18 @@ class VehicleNetwork(Data):
         self.refill_locations = self.station_data() #read in the df
         #add more variables to filter data if needed
     
-
-    def view_graph(self):
+    #getter
+    def get_G(self):
         return(self.G)
     
-    def view_df(self):
+    def get_df(self):
         return(self.refill_locations)
         
     def source_destination(self):
         #TODO: move the source/destination checking to the first step! This will make it faster...
         return(None)
     
+    #setter
     def vehicle_route(self):
         
         remove_list = []
@@ -298,13 +299,12 @@ class VehicleNetwork(Data):
                 remove_list.append(tuple((n1,n2)))
         
         self.G.remove_edges_from(remove_list)
-
-        return(self.G)
+        #return(self.G)
     
     def shortest_path(self,start,end):
         
         #use getters and setters for this!
-        self.G = self.vehicle_route()
+        self.vehicle_route()
         
         def get_random_location(loc):
             locations = self.refill_locations[self.refill_locations['city']==loc].copy()
@@ -336,7 +336,8 @@ class VehicleNetwork(Data):
 #%%
 if __name__ == "__main__":
         
-    path = VehicleNetwork(vehicle_fuel = 'LPG',vehicle_range=250)
+    path = VehicleNetwork(vehicle_fuel = 'ELEC',vehicle_range=250)
+    G = path.get_G()
     
     #df = path.view_df()
     #G = path.view_graph()
@@ -346,5 +347,3 @@ if __name__ == "__main__":
 
 #%%
 
-    
-    
