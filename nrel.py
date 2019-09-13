@@ -20,6 +20,7 @@ class Data:
     max_range = 500
     min_range = 0
     sample_stations = 500
+    country_options = ['CA','US']
     sample_province = 'AB'
     
     def __init__(self,vehicle_fuel,region,limit,new_data=False,nrel_data='fuel_stations.csv'):
@@ -28,7 +29,6 @@ class Data:
         self.new_data = new_data
         self.nrel_data = nrel_data
         self.limit = limit
-        self.country_options = ['CA','US']
     
     
     def FileName(self):
@@ -241,16 +241,20 @@ class Data:
             
         return(G)
     
-    @classmethod
-    def create_pickes(self):
+    @staticmethod
+    def create_pickes(max_range=None,min_range=None): #TODO: make this work...
         '''
         convenience method for creating all pickles at once
         '''
+        Data.max_range = max_range
+        Data.min_range = min_range
+        
         fuel_options = ['ELEC','LPG','CNG'] #TODO: add fuel_options to self
         
         for fuel in fuel_options:
-            for country in self.country_options:
-                network = Data(vehicle_fuel=fuel,region=country)
+            for country in Data.country_options:
+                #self.create_graph()
+                network = Data(vehicle_fuel=fuel,region=country,limit=None)
                 network.create_graph()
     
             
@@ -315,35 +319,75 @@ class VehicleNetwork(Data):
                 
             location = locations.sample(n=1) #should be one row of a dataframe
             n = str(location.iloc[0]['city'])+'_'+str(location.iloc[0]['zip'])
-            return(n)
+            return(n) #TODO: add return that checks if user input is valid!
         
         source,target = get_random_location(start),get_random_location(end)
         
         #TODO: an error gets raised if there is no viable route.. Implement an optimizer that returns the vehicle range that makes the route possible!
+        #TODO: make sure that self.G has been properly filtered!
+        path_data = {}
+        path_data['fuel'] = self.vehicle_fuel
+        path_data['region'] = self.region
+        path_data['user input start'] = start
+        path_data['user input end'] = end
+        path_data['vehicle range'] = self.vehicle_range
+        
         try:
             path = nx.shortest_path(self.G,source=source,target=target)
+            path_data['route'] = path
+            path_data['number of stops'] = len(path)
+            #the path variable is a list of nodes. Now access node attributes to get lat/long,etc
+            path_data_detail = []
+            cumulative_distance,weight = 0,0
+            for stop_number,stop in enumerate(path):
+                
+                if stop_number == 0:
+                    None
+                elif stop_number < len(path):
+                    weight = self.G[path[stop_number-1]][path[stop_number]]['weight']
+                    cumulative_distance = cumulative_distance+weight
+                else:
+                    None
+                
+                
+                attributes = self.G.node[stop]
+                path_data_detail.append({stop:{'latitude':attributes['lat'],
+                                               'longitude':attributes['long'],
+                                               'fuel':attributes['fuel'],
+                                               'city':attributes['city'],
+                                               'ev_pricing':attributes['ev_pricing'],
+                                               'facility_type':attributes['facility_type'],
+                                               'address':attributes['address'],
+                                               'province':attributes['province'],
+                                               'station_name':attributes['station_name'],
+                                               'cumulative_distance':cumulative_distance,
+                                               'distance from previous node':weight}})
+            
+            path_data['total distance'] = cumulative_distance    
+            path_data['detailed path'] = path_data_detail
+            #if a path can be found:
+            path_data['route found'] = True
         except:
+            path_data['route found'] = False
+            path_data['detailed path'] = None
+            path_data['total distance'] = None
             raise
             #TODO: raise a warning that the route didnt work, and then inform the user that a new path is being calculated with a higher range!
-            
+        
+        
         #add the "gas station" algorithm to see if any of the nodes (stations) can be passed over. This shouldnt be the case
         #Algorithm example: https://www.coursera.org/lecture/algorithmic-toolbox/car-fueling-8nQK8
         #just because a car goes through a node, does not neccecarily mean that it needs to fuel!
         
-        return(path)
+        return(path_data) #TODO: round everything...
     
         
 #%%
 if __name__ == "__main__":
-        
+    Data.create_pickes(max_range=500,min_range=0)
     path = VehicleNetwork(vehicle_fuel = 'ELEC',vehicle_range=250)
     G = path.get_G()
-    
-    #df = path.view_df()
-    #G = path.view_graph()
-    #G = path.vehicle_route()
- 
     route = path.shortest_path(start='Vancouver',end='Halifax')
 
 #%%
-
+    
