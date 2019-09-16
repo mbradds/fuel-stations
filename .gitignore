@@ -4,7 +4,6 @@ __pycache__
 *.json
 *.log
 *.sql
-*.ipynb
 *.csv
 *.xlsx
 *.twb
@@ -12,3 +11,4 @@ __pycache__
 *.twbr
 *.pickle
 test.py
+.ipynb_checkpoints
