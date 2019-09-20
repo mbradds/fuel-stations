@@ -9,6 +9,7 @@ import pickle
 #import matplotlib.pylab as plt
 from pandas.plotting import register_matplotlib_converters
 import warnings
+import re
 headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'}
 #%%
 
@@ -260,7 +261,7 @@ class Data:
             
 #TODO: make the graph (G) an intance variable. This will make it easier to modify the graph range in a VehicleNetwork method
 class VehicleNetwork(Data):
-    
+    #TODO: NA doesnt work as a region...
     '''
     Fuel Types: ELEC - Electric vehicle, LPG - Propane vehicle, BD - Biodiesel, CNG - compresses natural gas 
     this creates a comlete graph, meaning that all vehicle routes are possible. This network will be pruned when the 
@@ -284,7 +285,11 @@ class VehicleNetwork(Data):
     
     def get_df(self):
         return(self.refill_locations)
-        
+    
+    def available_cities(self):
+        cities = list(self.refill_locations['city'])
+        return(cities)
+    
     def source_destination(self):
         #TODO: move the source/destination checking to the first step! This will make it faster...
         return(None)
@@ -310,18 +315,25 @@ class VehicleNetwork(Data):
         #use getters and setters for this!
         self.vehicle_route()
         
-        def get_random_location(loc):
-            locations = self.refill_locations[self.refill_locations['city']==loc].copy()
-            #raise a warning if the size of locations == 0. This means there isnt a station in that city
-            if len(locations) == 0:
+        def get_random_location(loc,city_type):
+            #first check to see if the loc is in the city list
+            if loc in self.available_cities():
+            
+                locations = self.refill_locations[self.refill_locations['city']==loc].copy()
+                #raise a warning if the size of locations == 0. This means there isnt a station in that city
+                if len(locations) == 0:
+                    warnings.simplefilter('error')
+                    warnings.warn('There are no '+self.vehicle_fuel+' stations '+'in '+loc)
+                    
+                location = locations.sample(n=1) #should be one row of a dataframe
+                n = str(location.iloc[0]['city'])+'_'+str(location.iloc[0]['zip'])
+            else:
                 warnings.simplefilter('error')
-                warnings.warn('There are no '+self.vehicle_fuel+' stations '+'in '+loc)
+                warnings.warn(loc+' is not a valid city. Did you mean:')
                 
-            location = locations.sample(n=1) #should be one row of a dataframe
-            n = str(location.iloc[0]['city'])+'_'+str(location.iloc[0]['zip'])
             return(n) #TODO: add return that checks if user input is valid!
         
-        source,target = get_random_location(start),get_random_location(end)
+        source,target = get_random_location(start,city_type='start location'),get_random_location(end,city_type='end location')
         
         #TODO: an error gets raised if there is no viable route.. Implement an optimizer that returns the vehicle range that makes the route possible!
         #TODO: make sure that self.G has been properly filtered!
@@ -384,10 +396,11 @@ class VehicleNetwork(Data):
         
 #%%
 if __name__ == "__main__":
-    Data.create_pickes(max_range=500,min_range=0)
-    path = VehicleNetwork(vehicle_fuel = 'ELEC',vehicle_range=250)
-    G = path.get_G()
-    route = path.shortest_path(start='Vancouver',end='Halifax')
-
-#%%
+    #Data.create_pickes(max_range=500,min_range=0)
+    path = VehicleNetwork(vehicle_fuel = 'ELEC',vehicle_range=250,region='CA')
+    #G = path.get_G()
+    route = path.shortest_path(start='Edmonton',end='London')
+    #cities = path.available_cities()
     
+#%%
+

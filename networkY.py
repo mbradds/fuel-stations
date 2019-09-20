@@ -50,24 +50,84 @@ class Graph:
     
     def number_of_edges(self):
         return(len(self.edges()))
+    
+    def bfs(self,start_node,target=None):
+
+        queue = []
+        visited = {}
+        queue.append(start_node)
+        visited[start_node] = True
+        level = {start_node:0}
+        parent = {start_node:None}
+        i = 1
+        
+        while len(queue) != 0:
+            node = queue.pop(0)
+            node_neighbors = self.node_neighbors(node)
+            for n in node_neighbors:
+                if n not in visited:
+                    queue.append(n)
+                    visited[n] = True
+                    level[n] = i
+                    parent[n] = node
+            i = i+1
+        
+        shortest_path = []
+        if target != None:
+            x = target
+            while x != start_node:
+                x = parent[x]
+                shortest_path.append(x)
+                
+            shortest_path.reverse()
+            shortest_path.append(target)
             
+        return(level,parent,shortest_path)
+    
+#    def dfs(self,start_node):
+#        parents = {start_node:None}
+#        
+#        
+#        for n in self.node_neighbors(start_node):
+#            if n not in parents:
+#                parents[n] = start_node
+#                dfs(n)
+
+
+     
 
 if __name__ == "__main__":
     g= Graph()
-    g.addNode('1')
-    g.addNode('2')
-    g.addNode('3')
-    g.addNode('4')
-    g.addEdge('1','2')
-    g.addEdge('1','3')
-    g.addEdge('2','3')
-    g.addEdge('3','4')
-    g.addEdge('2','4')
+    g.addNode('A')
+    g.addNode('B')
+    g.addNode('C')
+    g.addNode('D')
+    g.addNode('E')
+    g.addEdge('A','B')
+    g.addEdge('A','C')
+    g.addEdge('B','D')
+    g.addEdge('B','E')
+    g.addEdge('D','E')
+    g.addEdge('C','D')
     G = g.getGraph()
-    print(G)
-    print(g.number_of_nodes())
-    print(g.number_of_edges())
-    print(g.edges())
-    print(g.node_neighbors('1'))
+    #print(G)
+    #print(g.number_of_nodes())
+    #print(g.number_of_edges())
+    #print(g.edges())
+    #print(g.node_neighbors('A'))
+    
+    path = g.dfs('A')
 
 #%%
+
+
+p = path[1]
+x = 'E'
+while x != 'A':
+    x = p[x]
+    #print(x)
+    
+
+#p['E']
+
+
