@@ -1,41 +1,59 @@
+import math
 class Graph:
+    '''
+    class for a simple undirected graph. Nodes can contain descriptive data, and edges can contain weights.
+    
+    '''
     
     graph_dict={}
+    edges = []
     
     def addNode(self,node,neighbor=None,attributes={}):        
         if node not in self.graph_dict:
-            self.graph_dict[node] = {'attributes':attributes,'connections':[]}
-    
+            #self.graph_dict[node] = {'attributes':attributes,'connections':[]} #change connections to a dictioanry for fast hash lookup!
+            self.graph_dict[node] = {'attributes':attributes,'connections':{}}
+            
     #TODO: make sure that duplicate edges cant be added!
     def addEdge(self,node,neighbour,weight=None):  
         if node not in self.graph_dict:
-            self.addNode(node,neighbour)
-        else:
-            self.graph_dict[node]['connections'].append({neighbour:weight})
-            self.graph_dict[neighbour]['connections'].append({node:weight})
+            self.addNode(node)
+        elif neighbour not in self.graph_dict:
+            self.addNode(neighbour)
+        
+        self.graph_dict[node]['connections'][neighbour] = weight
+        self.graph_dict[neighbour]['connections'][node] = weight
+        self.edges.append([node,neighbour])
     
-    def edges(self):
-        edges = []
-        #go through all the nodes
-        for node,value in self.graph_dict.items():
-            #go throug all the nodes connections, there could be more than one
-            for conn in value['connections']:
-                #access each connections key
-                for conn_node,weight in conn.items():
-                    #add to the list if an edge does not already exist.
-                    if [node,conn_node] not in edges and [conn_node,node] not in edges:
-                        edges.append([node,conn_node])
-                    
-        return(edges)
     
-    #gets
+    def is_connection(self,node,neighbour):
+        '''
+        uses hashing to quickly check if there is a connection. The worst case run time is a double hash lookup (n=number of nodes)
+        '''
+        
+        try:
+            self.graph_dict[node]['connections'][neighbour]
+            connection = True
+        except KeyError:
+            
+            try:
+                self.graph_dict[neighbour]['connections'][node]
+                connection = True
+            except KeyError:
+                connection = False
+        
+        return(connection)
+            
+        
+    #gets all direct connections
     def node_neighbors(self,node):
         neighbors = []
-        for conn in self.graph_dict[node]['connections']:
-            for n,weight in conn.items():
-                neighbors.append(n)
-                
+        for key in self.graph_dict[node]['connections']:
+            neighbors.append(key)
+        
         return(neighbors)
+    
+    def edge_weight(self,node,neighbour):
+        return(self.graph_dict[node]['connections'][neighbour])
             
     def show_edges(self):
         for node in self.graph_dict:
@@ -49,7 +67,7 @@ class Graph:
         return(len(self.graph_dict))
     
     def number_of_edges(self):
-        return(len(self.edges()))
+        return(len(self.edges))
     
     def bfs(self,start_node,target=None):
 
@@ -84,50 +102,72 @@ class Graph:
             
         return(level,parent,shortest_path)
     
-#    def dfs(self,start_node):
-#        parents = {start_node:None}
-#        
-#        
-#        for n in self.node_neighbors(start_node):
-#            if n not in parents:
-#                parents[n] = start_node
-#                dfs(n)
-
-
-     
+    def dijkstra(self,start):
+        
+        routes_from_city = {}
+        visited_cities = []
+        current_city = start
+        
+        for node in self.graph_dict:
+            if node == start:
+                routes_from_city[node] = [0,node]
+            else:
+                routes_from_city[node] = [math.inf,None]
+        
+        
+        while current_city:
+            visited_cities.append(current_city)
+            
+            neighbors = self.node_neighbors(current_city)
+            
+            for next_city in neighbors:
+                price = self.edge_weight(current_city,next_city)
+            
+                if routes_from_city[next_city][0] > price+routes_from_city[current_city][0]:
+                    routes_from_city[next_city] = [price+routes_from_city[current_city][0],current_city]
+            
+            #find the cheapest unvisited neighbor
+            
+            current_city = None
+            cheapest_route = math.inf
+            for key,val in routes_from_city.items():
+                price,previous_city = val[0],val[1]
+                if price < cheapest_route and key not in visited_cities:
+                    cheapest_route = price
+                    current_city = key
+                
+        #shortest path can be found from routes_from_city
+        #shortest path from Atlanta to Chicago:
+        #1) set start = atlanta
+        #2) routes_from_city['Chicago']
+        
+        return(routes_from_city)        
+    
 
 if __name__ == "__main__":
     g= Graph()
-    g.addNode('A')
-    g.addNode('B')
-    g.addNode('C')
-    g.addNode('D')
-    g.addNode('E')
-    g.addEdge('A','B')
-    g.addEdge('A','C')
-    g.addEdge('B','D')
-    g.addEdge('B','E')
-    g.addEdge('D','E')
-    g.addEdge('C','D')
-    G = g.getGraph()
+    g.addNode('Atlanta')
+    g.addNode('Boston')
+    g.addNode('Chicago')
+    g.addNode('Denver')
+    g.addNode('El Paso')
+    g.addEdge('Atlanta','Boston',weight=100)
+    g.addEdge('Atlanta','Denver',weight=160)
+    g.addEdge('Boston','Chicago',weight=120)
+    g.addEdge('Boston','Denver',weight=180)
+    g.addEdge('Chicago','El Paso',weight=80)
+    g.addEdge('Denver','Chicago',weight=40)
+    g.addEdge('Denver','El Paso',weight=40)
+    #G = g.getGraph()
     #print(G)
+    #print(g.is_connection('B','A'))
     #print(g.number_of_nodes())
     #print(g.number_of_edges())
     #print(g.edges())
     #print(g.node_neighbors('A'))
     
-    path = g.dfs('A')
+    #path = g.bfs('A','E')
+    #weight = g.edge_weight('A','B')
+    d = g.dijkstra('Atlanta')
 
 #%%
-
-
-p = path[1]
-x = 'E'
-while x != 'A':
-    x = p[x]
-    #print(x)
-    
-
-#p['E']
-
-
