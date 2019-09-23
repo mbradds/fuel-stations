@@ -4,7 +4,6 @@ __pycache__
 *.json
 *.log
 *.sql
-*.csv
 *.xlsx
 *.twb
 *.twbx
