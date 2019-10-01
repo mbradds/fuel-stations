@@ -6,23 +6,21 @@ import json
 import networkx as nx
 from math import radians, cos, sin, asin, sqrt
 import pickle
-#import matplotlib.pylab as plt
-from pandas.plotting import register_matplotlib_converters
+from itertools import combinations
 import warnings
 import re
 headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'}
 #%%
-
+#TODO: create a higher level class that verifies the data and takes in start and ending locations
+#TODO: add logging when creating the pickles
 class Data:
     '''
     NREL API documentation: https://developer.nrel.gov/docs/transportation/alt-fuel-stations-v1/
     '''
-    
     max_range = 500
     min_range = 50
     sample_stations = 500
     country_options = ['CA','US']
-    sample_province = 'AB'
     
     def __init__(self,vehicle_fuel,region,limit,new_data=False,nrel_data='fuel_stations.csv'):
         self.vehicle_fuel = vehicle_fuel
@@ -35,8 +33,10 @@ class Data:
     def FileName(self):
         return(self.vehicle_fuel+'_'+self.region+'_'+'Max_'+str(Data.max_range)+'_'+'Min_'+str(Data.min_range)+'.pickle')
         
+        
     def __str__(self):
         return('')
+        
 
     @staticmethod
     def config_file(config_file):
@@ -50,17 +50,20 @@ class Data:
         except:
             raise
             
+            
     @staticmethod
     def api_url(key,country,url='https://developer.nrel.gov/api/alt-fuel-stations/v1.json?country=CO&api_key=YOUR_KEY_HERE'):
         url = url.replace('YOUR_KEY_HERE',key)
         url = url.replace('CO',country)
         return(url)
+        
     
     @staticmethod
     def request_api(url):
         r = requests.get(url,allow_redirects=True, stream=True, headers=headers).json() #returns a dictionary
         df = pd.DataFrame(r['fuel_stations'])
         return(df)
+        
     
     def get_stations(self):
         if os.path.isfile(self.nrel_data):
@@ -144,12 +147,13 @@ class Data:
         
         return(stations)
     
+    
     @staticmethod
     def delete_file(name):
         if os.path.isfile(name):
             os.remove(name)
             
-    
+            
     def station_data(self):
         if self.new_data==True:
             Data.delete_file(self.nrel_data)
@@ -162,6 +166,7 @@ class Data:
             df = df[df['country']==self.region]
         
         return(df)
+        
     
     #from https://stackoverflow.com/questions/4913349/haversine-formula-in-python-bearing-and-distance-between-two-gps-points
     def haversine(self,lon1, lat1, lon2, lat2):
@@ -180,6 +185,7 @@ class Data:
         c = 2 * asin(sqrt(a)) 
         r = 6371 # Radius of earth in kilometers. Use 3956 for miles, 6371 for km
         return (c * r)
+    
 
     def create_graph(self):
         '''
@@ -188,13 +194,8 @@ class Data:
         optimal path calculation much slower.
         '''
         #TODO: look at casting types for node attributes and edge weight. This may reduce pickle file size
-        #TODO: remove limit instance variable after testing is complete!
-        #if self.limit == True:
-        #    self.refill_locations = self.refill_locations[self.refill_locations['state']==VehicleNetwork.sample_province]
-            #self.refill_locations = self.refill_locations.sample(n=Vehicle_Network.sample_stations)
-            
+        #TODO: remove limit instance variable after testing is complete!            
 
-        #file_name = self.vehicle_fuel+'.pickle'
         file_name = self.FileName()
         refill_locations = self.station_data()        
         
@@ -204,7 +205,7 @@ class Data:
         else:
             #ceates a complete graph if there isnt one already
             print('creating pickle object: '+file_name)
-            print(len(refill_locations))
+            print('DF length: '+str(len(refill_locations)))
             G = nx.Graph()
             for index,row in refill_locations.iterrows():
                 
@@ -222,28 +223,27 @@ class Data:
                            address = row['street_address'])
             
             #add the graph edges
-            #This probably runs in n^2 time. Maybe look for a better way to add edges, only when certain conditions are met...
-            #look at using a hash table that stores the distance between two nodes. This is a O(1) lookup...
-            #TODO: come up with all unique pairs in node list, and then add edges... (https://stackoverflow.com/questions/18201690/get-unique-combinations-of-elements-from-a-python-list)
-            for node1 in G:
-                for node2 in G:
-                    if node1 != node2 and not G.has_edge(node1,node2):
+            print('Nodes: '+str(len(G.nodes)))
+            edges = list(combinations(list(G.nodes),2))
+            print('Edges: '+str(len(edges)))
+            
+            for edge in edges:
+                lat1,long1 = G.node[edge[0]]['lat'],G.node[edge[0]]['long']
+                lat2,long2 = G.node[edge[1]]['lat'],G.node[edge[1]]['long']
+                distance = self.haversine(long1,lat1,long2,lat2)
+                #there is no range requirement
                         
-                        lat1,long1 = G.node[node1]['lat'],G.node[node1]['long']
-                        lat2,long2 = G.node[node2]['lat'],G.node[node2]['long']
-                        distance = self.haversine(long1,lat1,long2,lat2)
-                        #there is no range requirement
-                        
-                        if distance > Data.max_range or distance < Data.min_range:
-                            None #the vehicle cant conceivably make it from node 1 to node 2
-                        else:    
-                            G.add_edge(node1,node2,weight=distance)
-                            
+                if distance > Data.max_range or distance < Data.min_range:
+                    None #the vehicle cant make it from node 1 to node 2
+                else:    
+                    G.add_edge(edge[0],edge[1],weight=distance)
+                                            
             #pickle the graph once it is created
             nx.write_gpickle(G,file_name)
             print('created new pickle object: '+file_name+' with max range '+str(self.max_range))
             
         return(G)
+        
     
     @staticmethod
     def create_pickes(max_range=None,min_range=None): #TODO: make this work...
@@ -273,7 +273,6 @@ class VehicleNetwork(Data):
     when needed
     '''
     
-    
     def __init__(self,vehicle_fuel,region='CA',vehicle_range=0,new_data=False):
         Data.__init__(self,vehicle_fuel,region,limit=False,new_data=new_data)
         self.vehicle_fuel = vehicle_fuel #user must select one fuel type.
@@ -286,18 +285,22 @@ class VehicleNetwork(Data):
     #getter
     def get_G(self):
         return(self.G)
+        
     
     def get_df(self):
         return(self.refill_locations)
-    
-    def available_cities(self):
-        cities = list(self.refill_locations['city'])
-        return(cities)
+        
     
     def source_destination(self):
         #TODO: move the source/destination checking to the first step! This will make it faster...
         return(None)
-    
+        
+        
+    def available_cities(self):
+        cities = list(self.refill_locations['city'].unique())
+        return(cities)
+        
+        
     #setter
     def vehicle_route(self):
         
@@ -313,8 +316,8 @@ class VehicleNetwork(Data):
         
         self.G.remove_edges_from(remove_list)
         #return(self.G)
+        
             
-    
     def shortest_path(self,start,end):
         
         #use getters and setters for this!
@@ -391,22 +394,20 @@ class VehicleNetwork(Data):
             raise
             #TODO: raise a warning that the route didnt work, and then inform the user that a new path is being calculated with a higher range!
         
-        
         #add the "gas station" algorithm to see if any of the nodes (stations) can be passed over. This shouldnt be the case
         #Algorithm example: https://www.coursera.org/lecture/algorithmic-toolbox/car-fueling-8nQK8
         #just because a car goes through a node, does not neccecarily mean that it needs to fuel!
-        
         return(path_data) #TODO: round everything...
     
         
 #%%
 if __name__ == "__main__":
-    #Data.create_pickes(max_range=500,min_range=50)
-    path = VehicleNetwork(vehicle_fuel = 'ELEC',vehicle_range=250,region='NA')
+    Data.create_pickes(max_range=500,min_range=50)
+    #path = VehicleNetwork(vehicle_fuel = 'ELEC',vehicle_range=250,region='CA')
     #G = path.get_G()
-    route = path.shortest_path(start='Edmonton',end='London')
-    #cities = path.available_cities()
-    #df = path.get_stations()
+    #route = path.shortest_path(start='Edmonton',end='London')
     
 #%%
-route = path.shortest_path(start='Edmonton',end='London')
+
+
+
