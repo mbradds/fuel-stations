@@ -59,6 +59,13 @@ class Graph:
         for node in self.graph_dict:
             for neighbour in self.graph_dict[node]:
                 print("(",node,", ",neighbour,")")
+                
+    def remove_edges(self,edge_list):
+        
+        for edge in edge_list:
+            del self.graph_dict[edge[0]]['connections'][edge[1]]
+            del self.graph_dict[edge[1]]['connections'][edge[0]]
+            
     
     def getGraph(self):
         return(self.graph_dict)
@@ -158,7 +165,9 @@ if __name__ == "__main__":
     g.addEdge('Chicago','El Paso',weight=80)
     g.addEdge('Denver','Chicago',weight=40)
     g.addEdge('Denver','El Paso',weight=40)
-    #G = g.getGraph()
+    
+    g.remove_edges([['Atlanta','Boston']])
+    G = g.getGraph()
     #print(G)
     #print(g.is_connection('B','A'))
     #print(g.number_of_nodes())
