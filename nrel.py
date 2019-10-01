@@ -19,7 +19,7 @@ class Data:
     '''
     
     max_range = 500
-    min_range = 0
+    min_range = 50
     sample_stations = 500
     country_options = ['CA','US']
     sample_province = 'AB'
@@ -158,7 +158,7 @@ class Data:
         #limit the data to the appropriate fuel type
         df = df[df['fuel_type_code']==self.vehicle_fuel]
         #get the chosen region
-        if self.region != 'all':
+        if self.region != 'NA':
             df = df[df['country']==self.region]
         
         return(df)
@@ -187,7 +187,7 @@ class Data:
         A higher max range allows you to view hypothetical vehicle routes that are not available with current EV technology, but it makes the 
         optimal path calculation much slower.
         '''
-        
+        #TODO: look at casting types for node attributes and edge weight. This may reduce pickle file size
         #TODO: remove limit instance variable after testing is complete!
         #if self.limit == True:
         #    self.refill_locations = self.refill_locations[self.refill_locations['state']==VehicleNetwork.sample_province]
@@ -203,6 +203,8 @@ class Data:
             print('read pickle object: '+file_name)
         else:
             #ceates a complete graph if there isnt one already
+            print('creating pickle object: '+file_name)
+            print(len(refill_locations))
             G = nx.Graph()
             for index,row in refill_locations.iterrows():
                 
@@ -221,7 +223,8 @@ class Data:
             
             #add the graph edges
             #This probably runs in n^2 time. Maybe look for a better way to add edges, only when certain conditions are met...
-            #look at using a hash table here
+            #look at using a hash table that stores the distance between two nodes. This is a O(1) lookup...
+            #TODO: come up with all unique pairs in node list, and then add edges... (https://stackoverflow.com/questions/18201690/get-unique-combinations-of-elements-from-a-python-list)
             for node1 in G:
                 for node2 in G:
                     if node1 != node2 and not G.has_edge(node1,node2):
@@ -251,7 +254,8 @@ class Data:
         Data.min_range = min_range
         
         fuel_options = ['ELEC','LPG','CNG'] #TODO: add fuel_options to self
-        
+        Data.country_options.append('NA')
+    
         for fuel in fuel_options:
             for country in Data.country_options:
                 #self.create_graph()
@@ -276,7 +280,7 @@ class VehicleNetwork(Data):
         self.refill_locations = self.station_data() #from nrel api
         self.vehicle_range = vehicle_range #user sets the range for their vehicle
         self.G = self.create_graph() #read in the graph
-        self.refill_locations = self.station_data() #read in the df
+        self.refill_locations = self.station_data() #read in the df. Make sure that refill_locations is used throughout this class!
         #add more variables to filter data if needed
     
     #getter
@@ -309,12 +313,13 @@ class VehicleNetwork(Data):
         
         self.G.remove_edges_from(remove_list)
         #return(self.G)
+            
     
     def shortest_path(self,start,end):
         
         #use getters and setters for this!
-        self.vehicle_route()
-        
+        #self.vehicle_route()
+        #TODO: make get_random_location into a verify_data method
         def get_random_location(loc,city_type):
             #first check to see if the loc is in the city list
             if loc in self.available_cities():
@@ -334,7 +339,7 @@ class VehicleNetwork(Data):
             return(n) #TODO: add return that checks if user input is valid!
         
         source,target = get_random_location(start,city_type='start location'),get_random_location(end,city_type='end location')
-        
+        self.vehicle_route()
         #TODO: an error gets raised if there is no viable route.. Implement an optimizer that returns the vehicle range that makes the route possible!
         #TODO: make sure that self.G has been properly filtered!
         path_data = {}
@@ -396,11 +401,12 @@ class VehicleNetwork(Data):
         
 #%%
 if __name__ == "__main__":
-    #Data.create_pickes(max_range=500,min_range=0)
-    path = VehicleNetwork(vehicle_fuel = 'ELEC',vehicle_range=250,region='CA')
+    #Data.create_pickes(max_range=500,min_range=50)
+    path = VehicleNetwork(vehicle_fuel = 'ELEC',vehicle_range=250,region='NA')
     #G = path.get_G()
     route = path.shortest_path(start='Edmonton',end='London')
     #cities = path.available_cities()
+    #df = path.get_stations()
     
 #%%
-
+route = path.shortest_path(start='Edmonton',end='London')
