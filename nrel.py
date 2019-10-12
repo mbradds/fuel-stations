@@ -11,61 +11,18 @@ import warnings
 import re
 headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'}
 #%%
-#TODO: create a higher level class that verifies the data and takes in start and ending locations
-#TODO: add logging when creating the pickles
-class Data:
-    '''
-    NREL API documentation: https://developer.nrel.gov/docs/transportation/alt-fuel-stations-v1/
-    '''
-    max_range = 500
-    min_range = 50
-    sample_stations = 500
-    country_options = ['CA','US']
-    
-    def __init__(self,vehicle_fuel,region,limit,new_data=False,nrel_data='fuel_stations.csv'):
-        self.vehicle_fuel = vehicle_fuel
-        self.region = region
-        self.new_data = new_data
-        self.nrel_data = nrel_data
-        self.limit = limit
-    
-    
-    def FileName(self):
-        return(self.vehicle_fuel+'_'+self.region+'_'+'Max_'+str(Data.max_range)+'_'+'Min_'+str(Data.min_range)+'.pickle')
-        
-        
-    def __str__(self):
-        return('')
-        
 
-    @staticmethod
-    def config_file(config_file):
-        __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname('__file__')))
-            
-        try:
-            with open(os.path.join(__location__,config_file)) as f:
-                config = json.load(f)
-                return(config)
+class Location:
     
-        except:
-            raise
-            
-            
-    @staticmethod
-    def api_url(key,country,url='https://developer.nrel.gov/api/alt-fuel-stations/v1.json?country=CO&api_key=YOUR_KEY_HERE'):
-        url = url.replace('YOUR_KEY_HERE',key)
-        url = url.replace('CO',country)
-        return(url)
-        
-    
-    @staticmethod
-    def request_api(url):
-        r = requests.get(url,allow_redirects=True, stream=True, headers=headers).json() #returns a dictionary
-        df = pd.DataFrame(r['fuel_stations'])
-        return(df)
-        
+    #TODO: move the api/data methods here
+    def __init__(self,vehicle_fuel,start,end,nrel_data='fuel_stations.csv'):
+        self.vehicle_fuel = vehicle_fuel
+        self.nrel_data = nrel_data
+        self.start = start
+        self.end = end
     
     def get_stations(self):
+        #print('called get_stations')
         if os.path.isfile(self.nrel_data):
             stations = pd.read_csv(self.nrel_data,dtype={'access_code': 'object', 
                                                          'access_days_time': 'object', 
@@ -145,28 +102,138 @@ class Data:
             stations = pd.concat(country_frames,axis=0,sort=False,ignore_index=True)
             stations.to_csv(self.nrel_data,index=False)
         
-        return(stations)
+        return(stations)   
+        
     
+    def find_region(self):
+        
+        df = self.get_stations()
+        
+        def get_random_location(loc,df):
+            
+            locations = df[df['city']==loc].copy()
+            #raise a warning if the size of locations == 0. This means there isnt a station in that city
+            if len(locations) == 0:
+                warnings.simplefilter('error')
+                warnings.warn('There are no '+self.vehicle_fuel+' stations '+'in '+loc)
+                    
+            location = locations.sample(n=1) #should be one row of a dataframe
+            n = (str(location.iloc[0]['city']).capitalize())+'_'+(str(location.iloc[0]['zip']).upper())
+
+            return(n) 
+        
+        
+        def split_location(loc):
+            loc = loc.lower()
+            l = loc.split(',')
+            if len(l) < 2:
+                l.append(None)
+            
+            c = df.copy()
+            c['city'] = [str(x).lower() for x in c['city']]
+            c['state'] = [str(x).lower() for x in c['state']]
+            
+            try:
+
+                if l[1] == None:
+                    location = c[c['city']==l[0]]
+                else:
+                    location = c[(c['city']==l[0]) & (c['state']==l[1])]
+            except:
+                #raise an error. No stations could be found
+                location = None
+            
+            #get a random station ("node")
+            
+            node = get_random_location(l[0],location)
+            
+            station_count = {}
+            max_stations = 0
+            for r in list(location['country'].unique()):
+                number_of_stations = len(location[location['country']==r])
+                if number_of_stations > max_stations:
+                    max_stations = number_of_stations
+                    
+                station_count[number_of_stations] = r
+            
+            return(station_count[max_stations],node)
+        
+        
+        start_country,start_node = split_location(self.start)
+        end_country,end_node = split_location(self.end)
+        
+        if start_country == end_country:
+            r = start_country
+            #return(start_country,start_node,end_node)
+        else:
+            r = 'NA'
+            #return('NA',start_node,end_node)
+        
+        #filter the df to use later on
+        #limit the data to the appropriate fuel type
+        df_region = df[df['fuel_type_code']==self.vehicle_fuel].copy()
+        #get the chosen region
+        if r != 'NA':
+            df_region = df_region[df_region['country']==r].copy()
+        
+        return(r,start_node,end_node,df_region) 
+    
+class Data(Location):
+    
+    #TODO: use setter on region depending on start and end values.
+    '''
+    NREL API documentation: https://developer.nrel.gov/docs/transportation/alt-fuel-stations-v1/
+    '''
+    max_range = 500
+    min_range = 50
+    country_options = ['CA','US']
+    
+    def __init__(self,vehicle_fuel,start,end,nrel_data='fuel_stations.csv'):
+        Location.__init__(self,vehicle_fuel,start,end)
+        self.vehicle_fuel = vehicle_fuel
+        self.nrel_data = nrel_data
+        self.start = start
+        self.end = end
+        self.region,self.start_node,self.end_node,self.stations = Location.find_region(self)
+     
+    
+    def FileName(self):
+        return(self.vehicle_fuel+'_'+self.region+'_'+'Max_'+str(Data.max_range)+'_'+'Min_'+str(Data.min_range)+'.pickle')
+        
+
+    @staticmethod
+    def config_file(config_file):
+        __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname('__file__')))
+            
+        try:
+            with open(os.path.join(__location__,config_file)) as f:
+                config = json.load(f)
+                return(config)
+    
+        except:
+            raise
+            
+            
+    @staticmethod
+    def api_url(key,country,url='https://developer.nrel.gov/api/alt-fuel-stations/v1.json?country=CO&api_key=YOUR_KEY_HERE'):
+        url = url.replace('YOUR_KEY_HERE',key)
+        url = url.replace('CO',country)
+        return(url)
+        
+    
+    @staticmethod
+    def request_api(url):
+        r = requests.get(url,allow_redirects=True, stream=True, headers=headers).json() #returns a dictionary
+        df = pd.DataFrame(r['fuel_stations'])
+        return(df)
+        
     
     @staticmethod
     def delete_file(name):
         if os.path.isfile(name):
             os.remove(name)
             
-            
-    def station_data(self):
-        if self.new_data==True:
-            Data.delete_file(self.nrel_data)
-            #also delete all of the graph pickles!!
-        df = self.get_stations()
-        #limit the data to the appropriate fuel type
-        df = df[df['fuel_type_code']==self.vehicle_fuel]
-        #get the chosen region
-        if self.region != 'NA':
-            df = df[df['country']==self.region]
-        
-        return(df)
-        
+                    
     
     #from https://stackoverflow.com/questions/4913349/haversine-formula-in-python-bearing-and-distance-between-two-gps-points
     def haversine(self,lon1, lat1, lon2, lat2):
@@ -188,6 +255,7 @@ class Data:
     
 
     def create_graph(self):
+        #print('called create_graph')
         '''
         creates a semi-complete graph if there isnt already one available in binary form. The graph connectivity is limited by the maximum range.
         A higher max range allows you to view hypothetical vehicle routes that are not available with current EV technology, but it makes the 
@@ -197,7 +265,7 @@ class Data:
         #TODO: remove limit instance variable after testing is complete!            
 
         file_name = self.FileName()
-        refill_locations = self.station_data()        
+        refill_locations = self.stations    
         
         if os.path.isfile(file_name):
             G = nx.read_gpickle(file_name)
@@ -259,7 +327,7 @@ class Data:
         for fuel in fuel_options:
             for country in Data.country_options:
                 #self.create_graph()
-                network = Data(vehicle_fuel=fuel,region=country,limit=None)
+                network = Data(vehicle_fuel=fuel,region=country)
                 network.create_graph()
     
             
@@ -273,29 +341,24 @@ class VehicleNetwork(Data):
     when needed
     '''
     
-    def __init__(self,vehicle_fuel,region='CA',vehicle_range=0,new_data=False):
-        Data.__init__(self,vehicle_fuel,region,limit=False,new_data=new_data)
+    def __init__(self,vehicle_fuel,start,end,vehicle_range):
+        Data.__init__(self,vehicle_fuel,start,end)
         self.vehicle_fuel = vehicle_fuel #user must select one fuel type.
-        self.refill_locations = self.station_data() #from nrel api
         self.vehicle_range = vehicle_range #user sets the range for their vehicle
         self.G = self.create_graph() #read in the graph
-        self.refill_locations = self.station_data() #read in the df. Make sure that refill_locations is used throughout this class!
-        #add more variables to filter data if needed
-    
+        self.refill_locations = self.stations #read in the df. Make sure that refill_locations is used throughout this class!
+        print('Region: '+self.region)
+        
+        
     #getter
     def get_G(self):
         return(self.G)
-        
-    
-    def get_df(self):
-        return(self.refill_locations)
-        
     
     def source_destination(self):
         #TODO: move the source/destination checking to the first step! This will make it faster...
         return(None)
         
-        
+    #this probably isnt needed. All start/end user input should be verified in the Data class
     def available_cities(self):
         cities = list(self.refill_locations['city'].unique())
         return(cities)
@@ -318,38 +381,17 @@ class VehicleNetwork(Data):
         #return(self.G)
         
             
-    def shortest_path(self,start,end):
+    def shortest_path(self):
         
-        #use getters and setters for this!
-        #self.vehicle_route()
-        #TODO: make get_random_location into a verify_data method
-        def get_random_location(loc,city_type):
-            #first check to see if the loc is in the city list
-            if loc in self.available_cities():
-            
-                locations = self.refill_locations[self.refill_locations['city']==loc].copy()
-                #raise a warning if the size of locations == 0. This means there isnt a station in that city
-                if len(locations) == 0:
-                    warnings.simplefilter('error')
-                    warnings.warn('There are no '+self.vehicle_fuel+' stations '+'in '+loc)
-                    
-                location = locations.sample(n=1) #should be one row of a dataframe
-                n = str(location.iloc[0]['city'])+'_'+str(location.iloc[0]['zip'])
-            else:
-                warnings.simplefilter('error')
-                warnings.warn(loc+' is not a valid city. Did you mean:')
-                
-            return(n) #TODO: add return that checks if user input is valid!
-        
-        source,target = get_random_location(start,city_type='start location'),get_random_location(end,city_type='end location')
+        source,target = self.start_node,self.end_node
         self.vehicle_route()
-        #TODO: an error gets raised if there is no viable route.. Implement an optimizer that returns the vehicle range that makes the route possible!
+  
         #TODO: make sure that self.G has been properly filtered!
         path_data = {}
         path_data['fuel'] = self.vehicle_fuel
         path_data['region'] = self.region
-        path_data['user input start'] = start
-        path_data['user input end'] = end
+        path_data['user input start'] = self.start
+        path_data['user input end'] = self.end
         path_data['vehicle range'] = self.vehicle_range
         
         try:
@@ -394,20 +436,16 @@ class VehicleNetwork(Data):
             raise
             #TODO: raise a warning that the route didnt work, and then inform the user that a new path is being calculated with a higher range!
         
-        #add the "gas station" algorithm to see if any of the nodes (stations) can be passed over. This shouldnt be the case
-        #Algorithm example: https://www.coursera.org/lecture/algorithmic-toolbox/car-fueling-8nQK8
-        #just because a car goes through a node, does not neccecarily mean that it needs to fuel!
         return(path_data) #TODO: round everything...
     
         
 #%%
 if __name__ == "__main__":
-    Data.create_pickes(max_range=500,min_range=50)
-    #path = VehicleNetwork(vehicle_fuel = 'ELEC',vehicle_range=250,region='CA')
-    #G = path.get_G()
-    #route = path.shortest_path(start='Edmonton',end='London')
+    
+    path = VehicleNetwork(vehicle_fuel='ELEC',start='Calgary',end='London',vehicle_range=250)
+    
+    route = path.shortest_path()
     
 #%%
-
 
 
