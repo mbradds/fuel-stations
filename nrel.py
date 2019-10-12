@@ -1,14 +1,12 @@
 import requests
 import pandas as pd
 import os
-import numpy as np
 import json
 import networkx as nx
+import random
 from math import radians, cos, sin, asin, sqrt
-import pickle
 from itertools import combinations
 import warnings
-import re
 headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'}
 #%%
 
@@ -102,23 +100,27 @@ class Location:
             stations = pd.concat(country_frames,axis=0,sort=False,ignore_index=True)
             stations.to_csv(self.nrel_data,index=False)
         
+        stations = stations[stations['fuel_type_code']==self.vehicle_fuel]
         return(stations)   
         
     
-    def find_region(self):
+    def find_region(self,custom=None):
         
         df = self.get_stations()
         
         def get_random_location(loc,df):
             
-            locations = df[df['city']==loc].copy()
+            df = df[df['city']==loc].copy()
+            unique = [str(c).capitalize()+'_'+str(p) for c,p in zip(df['city'],df['zip'])]
+            unique = list(set(unique))
+            
             #raise a warning if the size of locations == 0. This means there isnt a station in that city
-            if len(locations) == 0:
+            if len(unique) == 0:
                 warnings.simplefilter('error')
                 warnings.warn('There are no '+self.vehicle_fuel+' stations '+'in '+loc)
                     
-            location = locations.sample(n=1) #should be one row of a dataframe
-            n = (str(location.iloc[0]['city']).capitalize())+'_'+(str(location.iloc[0]['zip']).upper())
+            #location = locations.sample(n=1) #should be one row of a dataframe
+            n = random.choice(unique)
 
             return(n) 
         
@@ -162,21 +164,20 @@ class Location:
         start_country,start_node = split_location(self.start)
         end_country,end_node = split_location(self.end)
         
-        if start_country == end_country:
-            r = start_country
-            #return(start_country,start_node,end_node)
+        if custom == None:
+            if start_country == end_country:
+                r = start_country
+                #return(start_country,start_node,end_node)
+            else:
+                r = 'NA'
+                #return('NA',start_node,end_node)
         else:
-            r = 'NA'
-            #return('NA',start_node,end_node)
-        
-        #filter the df to use later on
-        #limit the data to the appropriate fuel type
-        df_region = df[df['fuel_type_code']==self.vehicle_fuel].copy()
-        #get the chosen region
+            r = custom
+
         if r != 'NA':
-            df_region = df_region[df_region['country']==r].copy()
+            df = df[df['country']==r].copy()
         
-        return(r,start_node,end_node,df_region) 
+        return(r,start_node,end_node,df) 
     
 class Data(Location):
     
@@ -188,13 +189,13 @@ class Data(Location):
     min_range = 50
     country_options = ['CA','US']
     
-    def __init__(self,vehicle_fuel,start,end,nrel_data='fuel_stations.csv'):
+    def __init__(self,vehicle_fuel,start,end,nrel_data='fuel_stations.csv',custom=None):
         Location.__init__(self,vehicle_fuel,start,end)
         self.vehicle_fuel = vehicle_fuel
         self.nrel_data = nrel_data
         self.start = start
         self.end = end
-        self.region,self.start_node,self.end_node,self.stations = Location.find_region(self)
+        self.region,self.start_node,self.end_node,self.stations = Location.find_region(self,custom)
      
     
     def FileName(self):
@@ -265,17 +266,16 @@ class Data(Location):
         #TODO: remove limit instance variable after testing is complete!            
 
         file_name = self.FileName()
-        refill_locations = self.stations    
-        
+                
         if os.path.isfile(file_name):
             G = nx.read_gpickle(file_name)
             print('read pickle object: '+file_name)
         else:
             #ceates a complete graph if there isnt one already
             print('creating pickle object: '+file_name)
-            print('DF length: '+str(len(refill_locations)))
+            print('DF length: '+str(len(self.stations)))
             G = nx.Graph()
-            for index,row in refill_locations.iterrows():
+            for index,row in self.stations.iterrows():
                 
                 #TODO: add more descriptors (columns) to the graph if neccecary
                 G.add_node(str(row['city'])+'_'+str(row['zip']),
@@ -326,8 +326,8 @@ class Data(Location):
     
         for fuel in fuel_options:
             for country in Data.country_options:
-                #self.create_graph()
-                network = Data(vehicle_fuel=fuel,region=country)
+                
+                network = Data(start='Calgary',end = 'Edmonton',vehicle_fuel=fuel,custom=country)
                 network.create_graph()
     
             
@@ -347,8 +347,7 @@ class VehicleNetwork(Data):
         self.vehicle_range = vehicle_range #user sets the range for their vehicle
         self.G = self.create_graph() #read in the graph
         self.refill_locations = self.stations #read in the df. Make sure that refill_locations is used throughout this class!
-        print('Region: '+self.region)
-        
+        print('Region: '+self.region)        
         
     #getter
     def get_G(self):
@@ -366,7 +365,7 @@ class VehicleNetwork(Data):
         
     #setter
     def vehicle_route(self):
-        
+    
         remove_list = []
         for paths in self.G.edges(data=True):
             
@@ -442,10 +441,10 @@ class VehicleNetwork(Data):
 #%%
 if __name__ == "__main__":
     
-    path = VehicleNetwork(vehicle_fuel='ELEC',start='Calgary',end='London',vehicle_range=250)
+    #Data.create_pickes(max_range=500,min_range=50)
     
+    path = VehicleNetwork(vehicle_fuel='ELEC',start='Calgary,ab',end='London,on',vehicle_range=250)
+
     route = path.shortest_path()
     
 #%%
-
-
