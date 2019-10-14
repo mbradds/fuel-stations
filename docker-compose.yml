@@ -1,0 +1,9 @@
+version: '3'
+services:  
+  flask:
+    image: vehicle_route:latest
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    ports:
+      - 5000:5000

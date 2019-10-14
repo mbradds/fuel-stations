@@ -11,3 +11,4 @@ __pycache__
 *.pickle
 test.py
 .ipynb_checkpoints
+/env
