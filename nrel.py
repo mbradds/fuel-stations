@@ -312,7 +312,7 @@ class Data(Location):
                                             
             #pickle the graph once it is created
             outfile = open(file_name,'wb')
-            pickle.dump(G,outfile)
+            pickle.dump(G.getGraph(),outfile)
             outfile.close()
             print('created new pickle object: '+file_name+' with max range '+str(self.max_range))
             
@@ -520,3 +520,4 @@ if __name__ == "__main__":
     #file = Data(vehicle_fuel='ELEC',start='Calgary,ab',end='London,on',graph_type = 'nx_pickles').FileName()
     
 #%%
+

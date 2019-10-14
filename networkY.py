@@ -1,13 +1,29 @@
 import math
+import pickle
 class Graph:
     '''
     class for a simple undirected graph. Nodes can contain descriptive data, and edges can contain weights.
     
     '''
-    
+    #TODO: add atatic methods that read and write to pickle
     graph_dict={}
     edges = []
     
+    @staticmethod
+    def savePickle(G,file_name):
+        outfile = open(file_name,'wb')
+        pickle.dump(G.getGraph(),outfile)
+        outfile.close()
+    
+    @staticmethod
+    def readPickle(file_name):
+        infile = open(file_name,'rb')
+        G = pickle.load(infile)
+        infile.close()
+        new_graph = Graph()
+        new_graph.graph_dict = G
+        return(new_graph)
+        
     def addNode(self,node,neighbor=None,attributes={}):        
         if node not in self.graph_dict:
             #self.graph_dict[node] = {'attributes':attributes,'connections':[]} #change connections to a dictioanry for fast hash lookup!
