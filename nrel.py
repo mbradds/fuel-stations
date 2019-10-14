@@ -7,16 +7,9 @@ import random
 from math import radians, cos, sin, asin, sqrt
 from itertools import combinations
 import warnings
-<<<<<<< HEAD
 import pickle
 from networkY import Graph
 headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'}
-=======
-
-headers = {
-    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36"
-}
->>>>>>> 15265d1b6c03040a5b2b649a411b88c1e6623003
 #%%
 
 
@@ -205,20 +198,11 @@ class Data(Location):
     """
     max_range = 500
     min_range = 50
-<<<<<<< HEAD
     country_options = ['CA','US']
     
     def __init__(self,vehicle_fuel,start,end,graph_type,nrel_data='fuel_stations.csv',custom=None):
         Location.__init__(self,vehicle_fuel,start,end)
         self.graph_type = graph_type
-=======
-    country_options = ["CA", "US"]
-
-    def __init__(
-        self, vehicle_fuel, start, end, nrel_data="fuel_stations.csv", custom=None
-    ):
-        Location.__init__(self, vehicle_fuel, start, end)
->>>>>>> 15265d1b6c03040a5b2b649a411b88c1e6623003
         self.vehicle_fuel = vehicle_fuel
         self.nrel_data = nrel_data
         self.start = start
@@ -228,23 +212,8 @@ class Data(Location):
         )
 
     def FileName(self):
-<<<<<<< HEAD
         return(self.graph_type+'/'+self.vehicle_fuel+'_'+self.region+'_'+'Max_'+str(Data.max_range)+'_'+'Min_'+str(Data.min_range)+'.pickle')
         
-=======
-        return (
-            self.vehicle_fuel
-            + "_"
-            + self.region
-            + "_"
-            + "Max_"
-            + str(Data.max_range)
-            + "_"
-            + "Min_"
-            + str(Data.min_range)
-            + ".pickle"
-        )
->>>>>>> 15265d1b6c03040a5b2b649a411b88c1e6623003
 
     @staticmethod
     def config_file(config_file):
@@ -292,7 +261,6 @@ class Data(Location):
         """
         # convert decimal degrees to radians
         lon1, lat1, lon2, lat2 = map(radians, [lon1, lat1, lon2, lat2])
-<<<<<<< HEAD
     
         # haversine formula 
         dlon = lon2 - lon1 
@@ -311,16 +279,6 @@ class Data(Location):
         '''
         #TODO: look at casting types for node attributes and edge weight. This may reduce pickle file size
         #TODO: remove limit instance variable after testing is complete!            
-=======
-
-        # haversine formula
-        dlon = lon2 - lon1
-        dlat = lat2 - lat1
-        a = sin(dlat / 2) ** 2 + cos(lat1) * cos(lat2) * sin(dlon / 2) ** 2
-        c = 2 * asin(sqrt(a))
-        r = 6371  # Radius of earth in kilometers. Use 3956 for miles, 6371 for km
-        return c * r
->>>>>>> 15265d1b6c03040a5b2b649a411b88c1e6623003
 
         file_name = self.FileName()
                 
@@ -375,17 +333,12 @@ class Data(Location):
     
     
     def create_graph(self):
-<<<<<<< HEAD
         print('called create_graph')
         '''
-=======
-        # print('called create_graph')
-        """
->>>>>>> 15265d1b6c03040a5b2b649a411b88c1e6623003
         creates a semi-complete graph if there isnt already one available in binary form. The graph connectivity is limited by the maximum range.
         A higher max range allows you to view hypothetical vehicle routes that are not available with current EV technology, but it makes the 
         optimal path calculation much slower.
-        """
+        '''
         # TODO: look at casting types for node attributes and edge weight. This may reduce pickle file size
         # TODO: remove limit instance variable after testing is complete!
 
@@ -444,15 +397,10 @@ class Data(Location):
         return G
 
     @staticmethod
-<<<<<<< HEAD
     def create_pickes(max_range=None,min_range=None,graph_type='nx_pickles'): #TODO: make this work...
         '''
-=======
-    def create_pickes(max_range=None, min_range=None):  # TODO: make this work...
-        """
->>>>>>> 15265d1b6c03040a5b2b649a411b88c1e6623003
         convenience method for creating all pickles at once
-        """
+        '''
         Data.max_range = max_range
         Data.min_range = min_range
 
@@ -461,7 +409,6 @@ class Data(Location):
 
         for fuel in fuel_options:
             for country in Data.country_options:
-<<<<<<< HEAD
                 
                 network = Data(start='Calgary',end = 'Edmonton',vehicle_fuel=fuel,custom=country,graph_type=graph_type)
                 if graph_type == 'nx_pickles':
@@ -473,24 +420,13 @@ class Data(Location):
     
             
 #TODO: make the graph (G) an intance variable. This will make it easier to modify the graph range in a VehicleNetwork method
-=======
-
-                network = Data(
-                    start="Calgary", end="Edmonton", vehicle_fuel=fuel, custom=country
-                )
-                network.create_graph()
-
-
-# TODO: make the graph (G) an intance variable. This will make it easier to modify the graph range in a VehicleNetwork method
->>>>>>> 15265d1b6c03040a5b2b649a411b88c1e6623003
 class VehicleNetwork(Data):
     # TODO: NA doesnt work as a region...
-    """
+    '''
     Fuel Types: ELEC - Electric vehicle, LPG - Propane vehicle, BD - Biodiesel, CNG - compresses natural gas 
     this creates a comlete graph, meaning that all vehicle routes are possible. This network will be pruned when the 
     user enters in a range for their vehicle. I think this may be faster, especially if each Vehicle_Network is saved and imported
     when needed
-<<<<<<< HEAD
     '''
     
     def __init__(self,vehicle_fuel,start,end,vehicle_range,graph_type='nx_pickles'):
@@ -503,21 +439,6 @@ class VehicleNetwork(Data):
         print('Region: '+self.region)        
         
     #getter
-=======
-    """
-
-    def __init__(self, vehicle_fuel, start, end, vehicle_range):
-        Data.__init__(self, vehicle_fuel, start, end)
-        self.vehicle_fuel = vehicle_fuel  # user must select one fuel type.
-        self.vehicle_range = vehicle_range  # user sets the range for their vehicle
-        self.G = self.create_graph()  # read in the graph
-        self.refill_locations = (
-            self.stations
-        )  # read in the df. Make sure that refill_locations is used throughout this class!
-        print("Region: " + self.region)
-
-    # getter
->>>>>>> 15265d1b6c03040a5b2b649a411b88c1e6623003
     def get_G(self):
         return self.G
 
@@ -611,7 +532,6 @@ class VehicleNetwork(Data):
 
 #%%
 if __name__ == "__main__":
-<<<<<<< HEAD
     
     Data.create_pickes(max_range=500,min_range=50,graph_type='ny_pickles')
     
@@ -621,16 +541,5 @@ if __name__ == "__main__":
     
     #file = Data(vehicle_fuel='ELEC',start='Calgary,ab',end='London,on',graph_type = 'nx_pickles').FileName()
     
-=======
-
-    # Data.create_pickes(max_range=500, min_range=50)
-
-    path = VehicleNetwork(
-        vehicle_fuel="ELEC", start="Calgary,ab", end="London,on", vehicle_range=250
-    )
-
-    route = path.shortest_path()
-
->>>>>>> 15265d1b6c03040a5b2b649a411b88c1e6623003
 #%%
 

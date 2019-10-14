@@ -1,15 +1,11 @@
 import math
-<<<<<<< HEAD
 import pickle
-=======
 
 
->>>>>>> 15265d1b6c03040a5b2b649a411b88c1e6623003
 class Graph:
-    """
+    '''
     class for a simple undirected graph. Nodes can contain descriptive data, and edges can contain weights.
     
-<<<<<<< HEAD
     '''
     #TODO: add atatic methods that read and write to pickle
     graph_dict={}
@@ -40,23 +36,9 @@ class Graph:
     
     def node(self,n):
         return(self.graph_dict[n])
-            
-    #TODO: make sure that duplicate edges cant be added!
-    def addEdge(self,node,neighbour,weight=None):  
-=======
-    """
-
-    graph_dict = {}
-    edges = []
-
-    def addNode(self, node, neighbor=None, attributes={}):
-        if node not in self.graph_dict:
-            # self.graph_dict[node] = {'attributes':attributes,'connections':[]} #change connections to a dictioanry for fast hash lookup!
-            self.graph_dict[node] = {"attributes": attributes, "connections": {}}
 
     # TODO: make sure that duplicate edges cant be added!
     def addEdge(self, node, neighbour, weight=None):
->>>>>>> 15265d1b6c03040a5b2b649a411b88c1e6623003
         if node not in self.graph_dict:
             self.addNode(node)
         elif neighbour not in self.graph_dict:
@@ -196,7 +178,6 @@ class Graph:
 
 
 if __name__ == "__main__":
-<<<<<<< HEAD
     g= Graph()
     g.addNode(node = 'Atlanta',attributes={'lat':50,'long':100})
     g.addNode('Boston')
@@ -213,33 +194,9 @@ if __name__ == "__main__":
     print(g.node('Atlanta')['attributes']['lat'])
     print(g.number_of_edges())
     #g.remove_edges([['Atlanta','Boston']])
-=======
-    g = Graph()
-    g.addNode("Atlanta")
-    g.addNode("Boston")
-    g.addNode("Chicago")
-    g.addNode("Denver")
-    g.addNode("El Paso")
-    g.addEdge("Atlanta", "Boston", weight=100)
-    g.addEdge("Atlanta", "Denver", weight=160)
-    g.addEdge("Boston", "Chicago", weight=120)
-    g.addEdge("Boston", "Denver", weight=180)
-    g.addEdge("Chicago", "El Paso", weight=80)
-    g.addEdge("Denver", "Chicago", weight=40)
-    g.addEdge("Denver", "El Paso", weight=40)
 
-    g.remove_edges([["Atlanta", "Boston"]])
->>>>>>> 15265d1b6c03040a5b2b649a411b88c1e6623003
     G = g.getGraph()
-    # print(G)
-    # print(g.is_connection('B','A'))
-    # print(g.number_of_nodes())
-    # print(g.number_of_edges())
-    # print(g.edges())
-    # print(g.node_neighbors('A'))
 
-    # path = g.bfs('A','E')
-    # weight = g.edge_weight('A','B')
     d = g.dijkstra("Atlanta")
 
 #%%
