@@ -481,9 +481,11 @@ class VehicleNetwork(Data):
 #%%
 if __name__ == "__main__":
 
-    #Data.create_pickes(max_range=500, min_range=50)
+    # Data.create_pickes(max_range=500, min_range=50)
 
-    path = VehicleNetwork(vehicle_fuel='ELEC',start='Calgary,ab',end='London,on',vehicle_range=250)
+    path = VehicleNetwork(
+        vehicle_fuel="ELEC", start="Calgary,ab", end="London,on", vehicle_range=250
+    )
 
     route = path.shortest_path()
 
