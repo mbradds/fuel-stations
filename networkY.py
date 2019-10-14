@@ -12,6 +12,12 @@ class Graph:
         if node not in self.graph_dict:
             #self.graph_dict[node] = {'attributes':attributes,'connections':[]} #change connections to a dictioanry for fast hash lookup!
             self.graph_dict[node] = {'attributes':attributes,'connections':{}}
+    
+    def nodes(self):
+        return(list(self.graph_dict.keys()))
+    
+    def node(self,n):
+        return(self.graph_dict[n])
             
     #TODO: make sure that duplicate edges cant be added!
     def addEdge(self,node,neighbour,weight=None):  
@@ -153,7 +159,7 @@ class Graph:
 
 if __name__ == "__main__":
     g= Graph()
-    g.addNode('Atlanta')
+    g.addNode(node = 'Atlanta',attributes={'lat':50,'long':100})
     g.addNode('Boston')
     g.addNode('Chicago')
     g.addNode('Denver')
@@ -165,8 +171,9 @@ if __name__ == "__main__":
     g.addEdge('Chicago','El Paso',weight=80)
     g.addEdge('Denver','Chicago',weight=40)
     g.addEdge('Denver','El Paso',weight=40)
-    
-    g.remove_edges([['Atlanta','Boston']])
+    print(g.node('Atlanta')['attributes']['lat'])
+    print(g.number_of_edges())
+    #g.remove_edges([['Atlanta','Boston']])
     G = g.getGraph()
     #print(G)
     #print(g.is_connection('B','A'))

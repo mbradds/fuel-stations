@@ -7,6 +7,8 @@ import random
 from math import radians, cos, sin, asin, sqrt
 from itertools import combinations
 import warnings
+import pickle
+from networkY import Graph
 headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'}
 #%%
 
@@ -189,8 +191,9 @@ class Data(Location):
     min_range = 50
     country_options = ['CA','US']
     
-    def __init__(self,vehicle_fuel,start,end,nrel_data='fuel_stations.csv',custom=None):
+    def __init__(self,vehicle_fuel,start,end,graph_type,nrel_data='fuel_stations.csv',custom=None):
         Location.__init__(self,vehicle_fuel,start,end)
+        self.graph_type = graph_type
         self.vehicle_fuel = vehicle_fuel
         self.nrel_data = nrel_data
         self.start = start
@@ -199,7 +202,7 @@ class Data(Location):
      
     
     def FileName(self):
-        return(self.vehicle_fuel+'_'+self.region+'_'+'Max_'+str(Data.max_range)+'_'+'Min_'+str(Data.min_range)+'.pickle')
+        return(self.graph_type+'/'+self.vehicle_fuel+'_'+self.region+'_'+'Max_'+str(Data.max_range)+'_'+'Min_'+str(Data.min_range)+'.pickle')
         
 
     @staticmethod
@@ -254,9 +257,70 @@ class Data(Location):
         r = 6371 # Radius of earth in kilometers. Use 3956 for miles, 6371 for km
         return (c * r)
     
+    def create_graph_ny(self):
+        print('called create_graph_ny')
+        '''
+        creates a semi-complete graph if there isnt already one available in binary form. The graph connectivity is limited by the maximum range.
+        A higher max range allows you to view hypothetical vehicle routes that are not available with current EV technology, but it makes the 
+        optimal path calculation much slower.
+        '''
+        #TODO: look at casting types for node attributes and edge weight. This may reduce pickle file size
+        #TODO: remove limit instance variable after testing is complete!            
 
+        file_name = self.FileName()
+                
+        if os.path.isfile(file_name):
+            infile = open(file_name,'rb')
+            G = pickle.load(infile)
+            infile.close()
+            print('read pickle object: '+file_name)
+        else:
+            #ceates a complete graph if there isnt one already
+            print('creating pickle object: '+file_name)
+            print('DF length: '+str(len(self.stations)))
+            G = Graph()
+            for index,row in self.stations.iterrows():
+                
+                #TODO: add more descriptors (columns) to the graph if neccecary
+                G.addNode(node=str(row['city'])+'_'+str(row['zip']),
+                           attributes={'city':row['city'],
+                                       'country':row['country'],
+                                       'ev_pricing':row['ev_pricing'],
+                                       'facility_type':row['facility_type'],
+                                       'fuel':row['fuel_type_code'],
+                                       'lat':row['latitude'],
+                                       'long':row['longitude'],
+                                       'province':row['state'],
+                                       'station_name':row['station_name'],
+                                       'address':row['street_address']})
+            
+            #add the graph edges
+            print('Nodes: '+str(G.number_of_nodes()))
+            edges = list(combinations(G.nodes(),2))
+            print('Edges: '+str(G.number_of_edges()))
+            
+            for edge in edges:
+                lat1,long1 = G.node(edge[0])['attributes']['lat'],G.node(edge[0])['attributes']['long']
+                lat2,long2 = G.node(edge[1])['attributes']['lat'],G.node(edge[1])['attributes']['long']
+                distance = self.haversine(long1,lat1,long2,lat2)
+                #there is no range requirement
+                        
+                if distance > Data.max_range or distance < Data.min_range:
+                    None #the vehicle cant make it from node 1 to node 2
+                else:    
+                    G.addEdge(edge[0],edge[1],weight=distance)
+                                            
+            #pickle the graph once it is created
+            outfile = open(file_name,'wb')
+            pickle.dump(G,outfile)
+            outfile.close()
+            print('created new pickle object: '+file_name+' with max range '+str(self.max_range))
+            
+        return(G)
+    
+    
     def create_graph(self):
-        #print('called create_graph')
+        print('called create_graph')
         '''
         creates a semi-complete graph if there isnt already one available in binary form. The graph connectivity is limited by the maximum range.
         A higher max range allows you to view hypothetical vehicle routes that are not available with current EV technology, but it makes the 
@@ -314,7 +378,7 @@ class Data(Location):
         
     
     @staticmethod
-    def create_pickes(max_range=None,min_range=None): #TODO: make this work...
+    def create_pickes(max_range=None,min_range=None,graph_type='nx_pickles'): #TODO: make this work...
         '''
         convenience method for creating all pickles at once
         '''
@@ -327,8 +391,13 @@ class Data(Location):
         for fuel in fuel_options:
             for country in Data.country_options:
                 
-                network = Data(start='Calgary',end = 'Edmonton',vehicle_fuel=fuel,custom=country)
-                network.create_graph()
+                network = Data(start='Calgary',end = 'Edmonton',vehicle_fuel=fuel,custom=country,graph_type=graph_type)
+                if graph_type == 'nx_pickles':
+                    network.create_graph()
+                elif graph_type == 'ny_pickles':
+                    network.create_graph_ny()
+                else:
+                    print('Pick nx_pickles or ny_pickles')
     
             
 #TODO: make the graph (G) an intance variable. This will make it easier to modify the graph range in a VehicleNetwork method
@@ -341,12 +410,13 @@ class VehicleNetwork(Data):
     when needed
     '''
     
-    def __init__(self,vehicle_fuel,start,end,vehicle_range):
-        Data.__init__(self,vehicle_fuel,start,end)
+    def __init__(self,vehicle_fuel,start,end,vehicle_range,graph_type='nx_pickles'):
+        Data.__init__(self,vehicle_fuel,start,end,graph_type)
         self.vehicle_fuel = vehicle_fuel #user must select one fuel type.
         self.vehicle_range = vehicle_range #user sets the range for their vehicle
         self.G = self.create_graph() #read in the graph
-        self.refill_locations = self.stations #read in the df. Make sure that refill_locations is used throughout this class!
+        self.refill_locations = self.stations#read in the df. Make sure that refill_locations is used throughout this class!
+        self.graph_type = graph_type
         print('Region: '+self.region)        
         
     #getter
@@ -441,10 +511,12 @@ class VehicleNetwork(Data):
 #%%
 if __name__ == "__main__":
     
-    #Data.create_pickes(max_range=500,min_range=50)
+    Data.create_pickes(max_range=500,min_range=50,graph_type='ny_pickles')
     
-    path = VehicleNetwork(vehicle_fuel='ELEC',start='Calgary,ab',end='London,on',vehicle_range=250)
+    #path = VehicleNetwork(vehicle_fuel='ELEC',start='Calgary,ab',end='London,on',vehicle_range=250)
 
-    route = path.shortest_path()
+    #route = path.shortest_path()
+    
+    #file = Data(vehicle_fuel='ELEC',start='Calgary,ab',end='London,on',graph_type = 'nx_pickles').FileName()
     
 #%%
