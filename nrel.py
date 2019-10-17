@@ -21,6 +21,30 @@ class Location:
         self.nrel_data = nrel_data
         self.start = start
         self.end = end
+    
+    @staticmethod
+    def config_file(config_file):
+        __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname("__file__")))
+
+        try:
+            with open(os.path.join(__location__, config_file)) as f:
+                config = json.load(f)
+                return config
+
+        except:
+            raise
+
+    @staticmethod
+    def api_url(key,country,url="https://developer.nrel.gov/api/alt-fuel-stations/v1.json?country=CO&api_key=YOUR_KEY_HERE"):
+        url = url.replace("YOUR_KEY_HERE", key)
+        url = url.replace("CO", country)
+        return url
+
+    @staticmethod
+    def request_api(url):
+        r = requests.get(url, allow_redirects=True, stream=True, headers=headers).json()  # returns a dictionary
+        df = pd.DataFrame(r["fuel_stations"])
+        return df
 
     def get_stations(self):
         # print('called get_stations')
@@ -100,8 +124,8 @@ class Location:
             country_frames = []
 
             for country in self.country_options:
-                url = Data.api_url(key, country)
-                df = Data.request_api(url)
+                url = Location.api_url(key, country)
+                df = Location.request_api(url)
                 country_frames.append(df)
                 print("api request: " + str(url))
 
@@ -118,18 +142,13 @@ class Location:
         def get_random_location(loc, df):
 
             df = df[df["city"] == loc].copy()
-            unique = [
-                str(c).capitalize() + "_" + str(p)
-                for c, p in zip(df["city"], df["zip"])
-            ]
+            unique = [str(c).capitalize() + "_" + str(p) for c, p in zip(df["city"], df["zip"])]
             unique = list(set(unique))
 
             # raise a warning if the size of locations == 0. This means there isnt a station in that city
             if len(unique) == 0:
                 warnings.simplefilter("error")
-                warnings.warn(
-                    "There are no " + self.vehicle_fuel + " stations " + "in " + loc
-                )
+                warnings.warn("There are no " + self.vehicle_fuel + " stations " + "in " + loc)
 
             # location = locations.sample(n=1) #should be one row of a dataframe
             n = random.choice(unique)
@@ -207,45 +226,11 @@ class Data(Location):
         self.nrel_data = nrel_data
         self.start = start
         self.end = end
-        self.region, self.start_node, self.end_node, self.stations = Location.find_region(
-            self, custom
-        )
+        self.region, self.start_node, self.end_node, self.stations = Location.find_region(self, custom)
 
     def FileName(self):
         return(self.graph_type+'/'+self.vehicle_fuel+'_'+self.region+'_'+'Max_'+str(Data.max_range)+'_'+'Min_'+str(Data.min_range)+'.pickle')
         
-
-    @staticmethod
-    def config_file(config_file):
-        __location__ = os.path.realpath(
-            os.path.join(os.getcwd(), os.path.dirname("__file__"))
-        )
-
-        try:
-            with open(os.path.join(__location__, config_file)) as f:
-                config = json.load(f)
-                return config
-
-        except:
-            raise
-
-    @staticmethod
-    def api_url(
-        key,
-        country,
-        url="https://developer.nrel.gov/api/alt-fuel-stations/v1.json?country=CO&api_key=YOUR_KEY_HERE",
-    ):
-        url = url.replace("YOUR_KEY_HERE", key)
-        url = url.replace("CO", country)
-        return url
-
-    @staticmethod
-    def request_api(url):
-        r = requests.get(
-            url, allow_redirects=True, stream=True, headers=headers
-        ).json()  # returns a dictionary
-        df = pd.DataFrame(r["fuel_stations"])
-        return df
 
     @staticmethod
     def delete_file(name):
@@ -279,18 +264,17 @@ class Data(Location):
         '''
         #TODO: look at casting types for node attributes and edge weight. This may reduce pickle file size
         #TODO: remove limit instance variable after testing is complete!            
-
+    
         file_name = self.FileName()
                 
         if os.path.isfile(file_name):
-            infile = open(file_name,'rb')
-            G = pickle.load(infile)
-            infile.close()
+            G = Graph.readPickle(file_name)
             print('read pickle object: '+file_name)
         else:
             #ceates a complete graph if there isnt one already
             print('creating pickle object: '+file_name)
             print('DF length: '+str(len(self.stations)))
+            #self.stations.to_csv(file_name,index=False) #for testing
             G = Graph()
             for index,row in self.stations.iterrows():
                 
@@ -324,12 +308,10 @@ class Data(Location):
                     G.addEdge(edge[0],edge[1],weight=distance)
                                             
             #pickle the graph once it is created
-            outfile = open(file_name,'wb')
-            pickle.dump(G.getGraph(),outfile)
-            outfile.close()
+            Graph.savePickle(G,file_name)
             print('created new pickle object: '+file_name+' with max range '+str(self.max_range))
             
-        return(G)
+        return(self.stations)
     
     
     def create_graph(self):
@@ -387,12 +369,7 @@ class Data(Location):
 
             # pickle the graph once it is created
             nx.write_gpickle(G, file_name)
-            print(
-                "created new pickle object: "
-                + file_name
-                + " with max range "
-                + str(self.max_range)
-            )
+            print("created new pickle object: "+ file_name+ " with max range "+ str(self.max_range))
 
         return G
 
@@ -437,7 +414,11 @@ class VehicleNetwork(Data):
         self.refill_locations = self.stations#read in the df. Make sure that refill_locations is used throughout this class!
         self.graph_type = graph_type
         print('Region: '+self.region)        
-        
+    
+    
+    def Name(self):
+        return(self.vehicle_fuel+'_'+self.start+'_'+self.end+'_'+str(self.vehicle_range))
+    
     #getter
     def get_G(self):
         return self.G

@@ -1,15 +1,16 @@
 import math
 import pickle
 
-
 class Graph:
     '''
     class for a simple undirected graph. Nodes can contain descriptive data, and edges can contain weights.
     
     '''
     #TODO: add atatic methods that read and write to pickle
-    graph_dict={}
-    edges = []
+    def __init__(self):
+        
+        self.graph_dict={}
+        self.edges = []
     
     @staticmethod
     def savePickle(G,file_name):
