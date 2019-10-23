@@ -149,7 +149,6 @@ class Location:
             if len(unique) == 0:
                 warnings.simplefilter("error")
                 warnings.warn("There are no " + self.vehicle_fuel + " stations " + "in " + loc)
-
             # location = locations.sample(n=1) #should be one row of a dataframe
             n = random.choice(unique)
 
@@ -231,6 +230,30 @@ class Data(Location):
     def FileName(self):
         return(self.graph_type+'/'+self.vehicle_fuel+'_'+self.region+'_'+'Max_'+str(Data.max_range)+'_'+'Min_'+str(Data.min_range)+'.pickle')
         
+
+    @staticmethod
+    def config_file(config_file):
+        __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname("__file__")))
+
+        try:
+            with open(os.path.join(__location__, config_file)) as f:
+                config = json.load(f)
+                return config
+
+        except:
+            raise
+
+    @staticmethod
+    def api_url(key,country,url="https://developer.nrel.gov/api/alt-fuel-stations/v1.json?country=CO&api_key=YOUR_KEY_HERE",):
+        url = url.replace("YOUR_KEY_HERE", key)
+        url = url.replace("CO", country)
+        return url
+
+    @staticmethod
+    def request_api(url):
+        r = requests.get(url, allow_redirects=True, stream=True, headers=headers).json()  # returns a dictionary
+        df = pd.DataFrame(r["fuel_stations"])
+        return df
 
     @staticmethod
     def delete_file(name):
@@ -514,11 +537,11 @@ class VehicleNetwork(Data):
 #%%
 if __name__ == "__main__":
     
-    Data.create_pickes(max_range=500,min_range=50,graph_type='ny_pickles')
+    #Data.create_pickes(max_range=500,min_range=50,graph_type='ny_pickles')
     
-    #path = VehicleNetwork(vehicle_fuel='ELEC',start='Calgary,ab',end='London,on',vehicle_range=250)
+    path = VehicleNetwork(vehicle_fuel='ELEC',start='Calgary,ab',end='London,on',vehicle_range=250)
 
-    #route = path.shortest_path()
+    route = path.shortest_path()
     
     #file = Data(vehicle_fuel='ELEC',start='Calgary,ab',end='London,on',graph_type = 'nx_pickles').FileName()
     
