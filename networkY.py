@@ -1,13 +1,12 @@
 import math
 import pickle
 
-
 class Graph:
     '''
     class for a simple undirected graph. Nodes can contain descriptive data, and edges can contain weights.
     
     '''
-    
+
     def __init__(self):
         
         self.graph_dict={}
