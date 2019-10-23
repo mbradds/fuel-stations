@@ -7,7 +7,7 @@ class Graph:
     
     '''
 
-    def __init__(self):
+    def __init__(self,graph_dict={},edges=[]):
         
         self.graph_dict={}
         self.edges = []
@@ -18,18 +18,17 @@ class Graph:
         pickle.dump(G.getGraph(),outfile)
         outfile.close()
     
-    @staticmethod
-    def readPickle(file_name):
+    #@staticmethod
+    def readPickle(self,file_name):
         infile = open(file_name,'rb')
         G = pickle.load(infile)
         infile.close()
-        new_graph = Graph()
-        new_graph.graph_dict = G
-        return(new_graph)
+        self.graph_dict=G
+        #self.graph_dict = G
+        #return(g)
         
     def addNode(self,node,neighbor=None,attributes={}):        
         if node not in self.graph_dict:
-            #self.graph_dict[node] = {'attributes':attributes,'connections':[]} #change connections to a dictioanry for fast hash lookup!
             self.graph_dict[node] = {'attributes':attributes,'connections':{}}
     
     def nodes(self):
@@ -42,9 +41,9 @@ class Graph:
     def addEdge(self, node, neighbour, weight=None):
         if node not in self.graph_dict:
             self.addNode(node)
-        elif neighbour not in self.graph_dict:
+        if neighbour not in self.graph_dict:
             self.addNode(neighbour)
-
+        
         self.graph_dict[node]["connections"][neighbour] = weight
         self.graph_dict[neighbour]["connections"][node] = weight
         self.edges.append([node, neighbour])
@@ -131,7 +130,7 @@ class Graph:
 
         return (level, parent, shortest_path)
 
-    def dijkstra(self, start):
+    def dijkstra(self, start,end=None):
 
         routes_from_city = {}
         visited_cities = []
@@ -164,28 +163,50 @@ class Graph:
                     cheapest_route = price
                     current_city = key
 
-        # shortest path can be found from routes_from_city
-        # shortest path from Atlanta to Chicago:
-        # 1) set start = atlanta
-        # 2) routes_from_city['Chicago']
-
-        return routes_from_city
+        if end != None:
+            next_city = end
+            route = [end]
+            
+            while next_city != start:
+                stop = routes_from_city[next_city][1]
+                route.append(stop)
+                next_city = stop
+            route = route[::-1]  
+            return(route)
+        else:            
+            return(routes_from_city)
 
 
 if __name__ == "__main__":
     g= Graph()
-    g.addNode('Calgary')
-    g.addNode('Edmonton')
-    g.addEdge('Calgary','Edmonton',weight=300)
-    g.addEdge('Calgary','Red Deer',weight=150)
-    g.addEdge('Red Deer','Edmonton',weight=150)
-    g.addEdge('Calgary','Banff',weight=126)
-
-    print(g.number_of_edges())
-    #g.remove_edges([['Atlanta','Boston']])
-
-    G = g.getGraph()
-
-    d = g.dijkstra('Calgary')
+    g.readPickle(r'C:\Users\mossgran\Documents\fuel_stations\ny_pickles\ELEC_CA_Max_500_Min_50.pickle')
+#    g.addEdge('Calgary','Edmonton',weight=300)
+#    g.addEdge('Calgary','Red Deer',weight=150)
+#    g.addEdge('Red Deer','Edmonton',weight=150)
+#    g.addEdge('Calgary','Banff',weight=126)
+#    g.addEdge('Banff','Kelowna',weight=500)
+#    g.addEdge('Kelowna','Vancouver',weight=100)
+    
+    #print(g.number_of_nodes())
+    #G = g.getGraph()
+    #'Calgary_T2E 8L6','London_N6L 1H5'
+    path = g.dijkstra(start = 'Calgary_T2E 8L6')
 
 #%%
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -276,7 +276,7 @@ class Data(Location):
         a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
         c = 2 * asin(sqrt(a)) 
         r = 6371 # Radius of earth in kilometers. Use 3956 for miles, 6371 for km
-        return (c * r)
+        return (int(round(c * r,0)))
     
     def create_graph_ny(self):
         print('called create_graph_ny')
@@ -537,10 +537,9 @@ class VehicleNetwork(Data):
 #%%
 if __name__ == "__main__":
     
-    #Data.create_pickes(max_range=500,min_range=50,graph_type='ny_pickles')
+    Data.create_pickes(max_range=500,min_range=50,graph_type='ny_pickles')
     
-    path = VehicleNetwork(vehicle_fuel='ELEC',start='Calgary,ab',end='London,on',vehicle_range=250)
-
+    path = VehicleNetwork(vehicle_fuel='ELEC',start='Calgary,ab',end='London,on',vehicle_range=500)
     route = path.shortest_path()
     
     #file = Data(vehicle_fuel='ELEC',start='Calgary,ab',end='London,on',graph_type = 'nx_pickles').FileName()
