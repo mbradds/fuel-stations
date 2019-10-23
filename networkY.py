@@ -7,9 +7,11 @@ class Graph:
     class for a simple undirected graph. Nodes can contain descriptive data, and edges can contain weights.
     
     '''
-    #TODO: add atatic methods that read and write to pickle
-    graph_dict={}
-    edges = []
+    
+    def __init__(self):
+        
+        self.graph_dict={}
+        self.edges = []
     
     @staticmethod
     def savePickle(G,file_name):
@@ -150,14 +152,8 @@ class Graph:
             for next_city in neighbors:
                 price = self.edge_weight(current_city, next_city)
 
-                if (
-                    routes_from_city[next_city][0]
-                    > price + routes_from_city[current_city][0]
-                ):
-                    routes_from_city[next_city] = [
-                        price + routes_from_city[current_city][0],
-                        current_city,
-                    ]
+                if (routes_from_city[next_city][0] > price + routes_from_city[current_city][0]):
+                    routes_from_city[next_city] = [price + routes_from_city[current_city][0],current_city]
 
             # find the cheapest unvisited neighbor
 
@@ -179,24 +175,18 @@ class Graph:
 
 if __name__ == "__main__":
     g= Graph()
-    g.addNode(node = 'Atlanta',attributes={'lat':50,'long':100})
-    g.addNode('Boston')
-    g.addNode('Chicago')
-    g.addNode('Denver')
-    g.addNode('El Paso')
-    g.addEdge('Atlanta','Boston',weight=100)
-    g.addEdge('Atlanta','Denver',weight=160)
-    g.addEdge('Boston','Chicago',weight=120)
-    g.addEdge('Boston','Denver',weight=180)
-    g.addEdge('Chicago','El Paso',weight=80)
-    g.addEdge('Denver','Chicago',weight=40)
-    g.addEdge('Denver','El Paso',weight=40)
-    print(g.node('Atlanta')['attributes']['lat'])
+    g.addNode('Calgary')
+    g.addNode('Edmonton')
+    g.addEdge('Calgary','Edmonton',weight=300)
+    g.addEdge('Calgary','Red Deer',weight=150)
+    g.addEdge('Red Deer','Edmonton',weight=150)
+    g.addEdge('Calgary','Banff',weight=126)
+
     print(g.number_of_edges())
     #g.remove_edges([['Atlanta','Boston']])
 
     G = g.getGraph()
 
-    d = g.dijkstra("Atlanta")
+    d = g.dijkstra('Calgary')
 
 #%%

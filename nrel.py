@@ -118,19 +118,13 @@ class Location:
         def get_random_location(loc, df):
 
             df = df[df["city"] == loc].copy()
-            unique = [
-                str(c).capitalize() + "_" + str(p)
-                for c, p in zip(df["city"], df["zip"])
-            ]
+            unique = [str(c).capitalize() + "_" + str(p) for c, p in zip(df["city"], df["zip"])]
             unique = list(set(unique))
 
             # raise a warning if the size of locations == 0. This means there isnt a station in that city
             if len(unique) == 0:
                 warnings.simplefilter("error")
-                warnings.warn(
-                    "There are no " + self.vehicle_fuel + " stations " + "in " + loc
-                )
-
+                warnings.warn("There are no " + self.vehicle_fuel + " stations " + "in " + loc)
             # location = locations.sample(n=1) #should be one row of a dataframe
             n = random.choice(unique)
 
@@ -207,9 +201,7 @@ class Data(Location):
         self.nrel_data = nrel_data
         self.start = start
         self.end = end
-        self.region, self.start_node, self.end_node, self.stations = Location.find_region(
-            self, custom
-        )
+        self.region, self.start_node, self.end_node, self.stations = Location.find_region(self, custom)
 
     def FileName(self):
         return(self.graph_type+'/'+self.vehicle_fuel+'_'+self.region+'_'+'Max_'+str(Data.max_range)+'_'+'Min_'+str(Data.min_range)+'.pickle')
@@ -217,9 +209,7 @@ class Data(Location):
 
     @staticmethod
     def config_file(config_file):
-        __location__ = os.path.realpath(
-            os.path.join(os.getcwd(), os.path.dirname("__file__"))
-        )
+        __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname("__file__")))
 
         try:
             with open(os.path.join(__location__, config_file)) as f:
@@ -230,20 +220,14 @@ class Data(Location):
             raise
 
     @staticmethod
-    def api_url(
-        key,
-        country,
-        url="https://developer.nrel.gov/api/alt-fuel-stations/v1.json?country=CO&api_key=YOUR_KEY_HERE",
-    ):
+    def api_url(key,country,url="https://developer.nrel.gov/api/alt-fuel-stations/v1.json?country=CO&api_key=YOUR_KEY_HERE",):
         url = url.replace("YOUR_KEY_HERE", key)
         url = url.replace("CO", country)
         return url
 
     @staticmethod
     def request_api(url):
-        r = requests.get(
-            url, allow_redirects=True, stream=True, headers=headers
-        ).json()  # returns a dictionary
+        r = requests.get(url, allow_redirects=True, stream=True, headers=headers).json()  # returns a dictionary
         df = pd.DataFrame(r["fuel_stations"])
         return df
 
@@ -387,12 +371,7 @@ class Data(Location):
 
             # pickle the graph once it is created
             nx.write_gpickle(G, file_name)
-            print(
-                "created new pickle object: "
-                + file_name
-                + " with max range "
-                + str(self.max_range)
-            )
+            print("created new pickle object: "+ file_name+ " with max range "+ str(self.max_range))
 
         return G
 
@@ -533,11 +512,11 @@ class VehicleNetwork(Data):
 #%%
 if __name__ == "__main__":
     
-    Data.create_pickes(max_range=500,min_range=50,graph_type='ny_pickles')
+    #Data.create_pickes(max_range=500,min_range=50,graph_type='ny_pickles')
     
-    #path = VehicleNetwork(vehicle_fuel='ELEC',start='Calgary,ab',end='London,on',vehicle_range=250)
+    path = VehicleNetwork(vehicle_fuel='ELEC',start='Calgary,ab',end='London,on',vehicle_range=250)
 
-    #route = path.shortest_path()
+    route = path.shortest_path()
     
     #file = Data(vehicle_fuel='ELEC',start='Calgary,ab',end='London,on',graph_type = 'nx_pickles').FileName()
     
