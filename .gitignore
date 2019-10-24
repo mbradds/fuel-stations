@@ -1,5 +1,6 @@
 *.pyo
 *.pyc
+*.txt
 __pycache__
 *.json
 *.log
