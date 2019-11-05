@@ -16,11 +16,12 @@ headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleW
 class Location:
 
     # TODO: move the api/data methods here
-    def __init__(self, vehicle_fuel, start, end, nrel_data="fuel_stations.csv"):
+    def __init__(self, vehicle_fuel, start, end, nrel_data="fuel_stations.csv",region=None):
         self.vehicle_fuel = vehicle_fuel
         self.nrel_data = nrel_data
         self.start = start
         self.end = end
+        self.region = region #use this to import a custom region. Options are CA,US,NA
     
     @staticmethod
     def config_file(config_file):
@@ -133,9 +134,12 @@ class Location:
             stations.to_csv(self.nrel_data, index=False)
 
         stations = stations[stations["fuel_type_code"] == self.vehicle_fuel]
-        return stations
+        if self.region != None:
+            if self.region != 'NA':
+                stations = stations[stations["country"] == self.region].copy()
+        return(stations)
 
-    def find_region(self, custom=None):
+    def find_region(self):
 
         df = self.get_stations()
 
@@ -188,20 +192,19 @@ class Location:
                 station_count[number_of_stations] = r
 
             return (station_count[max_stations], node)
-
-        start_country, start_node = split_location(self.start)
-        end_country, end_node = split_location(self.end)
-
-        if custom == None:
+        
+        
+        if self.region == None:
+            start_country, start_node = split_location(self.start)
+            end_country, end_node = split_location(self.end)
             if start_country == end_country:
                 r = start_country
-                # return(start_country,start_node,end_node)
             else:
-                r = "NA"
-                # return('NA',start_node,end_node)
+                r = 'NA'
         else:
-            r = custom
-
+            r = self.region
+            start_node,end_node = None,None
+            
         if r != "NA":
             df = df[df["country"] == r].copy()
 
@@ -214,21 +217,31 @@ class Data(Location):
     """
     NREL API documentation: https://developer.nrel.gov/docs/transportation/alt-fuel-stations-v1/
     """
-    max_range = 500
-    min_range = 50
+    #max_range = 500
+    #min_range = 50
     country_options = ['CA','US']
     
-    def __init__(self,vehicle_fuel,start,end,graph_type,nrel_data='fuel_stations.csv',custom=None):
-        Location.__init__(self,vehicle_fuel,start,end)
+    def __init__(self,vehicle_fuel,
+                 graph_type='nx_pickles',
+                 max_range = 500,
+                 min_range = 50,
+                 start=None,
+                 end=None,
+                 nrel_data='fuel_stations.csv',
+                 custom=None):
+        
+        Location.__init__(self,vehicle_fuel,start,end,region=custom)
         self.graph_type = graph_type
         self.vehicle_fuel = vehicle_fuel
         self.nrel_data = nrel_data
+        self.max_range = max_range
+        self.min_range = min_range
         self.start = start
         self.end = end
-        self.region, self.start_node, self.end_node, self.stations = Location.find_region(self, custom)
+        self.region, self.start_node, self.end_node, self.stations = Location.find_region(self)
 
     def FileName(self):
-        return(self.graph_type+'/'+self.vehicle_fuel+'_'+self.region+'_'+'Max_'+str(Data.max_range)+'_'+'Min_'+str(Data.min_range)+'.pickle')
+        return(self.graph_type+'/'+self.vehicle_fuel+'_'+self.region+'_'+'Max_'+str(self.max_range)+'_'+'Min_'+str(self.min_range)+'.pickle')
         
 
     @staticmethod
@@ -325,7 +338,7 @@ class Data(Location):
                 distance = self.haversine(long1,lat1,long2,lat2)
                 #there is no range requirement
                         
-                if distance > Data.max_range or distance < Data.min_range:
+                if distance > self.max_range or distance < self.min_range:
                     None #the vehicle cant make it from node 1 to node 2
                 else:    
                     G.addEdge(edge[0],edge[1],weight=distance)
@@ -385,7 +398,7 @@ class Data(Location):
                 distance = self.haversine(long1, lat1, long2, lat2)
                 # there is no range requirement
 
-                if distance > Data.max_range or distance < Data.min_range:
+                if distance > self.max_range or distance < self.min_range:
                     None  # the vehicle cant make it from node 1 to node 2
                 else:
                     G.add_edge(edge[0], edge[1], weight=distance)
@@ -537,10 +550,13 @@ class VehicleNetwork(Data):
 #%%
 if __name__ == "__main__":
     
-    Data.create_pickes(max_range=500,min_range=50,graph_type='ny_pickles')
+    stations = Data(vehicle_fuel='ELEC',min_range=200,max_range=400,custom='NA')
+    G = stations.create_graph()
+    df = stations.get_stations()
     
-    path = VehicleNetwork(vehicle_fuel='ELEC',start='Calgary,ab',end='London,on',vehicle_range=500)
-    route = path.shortest_path()
+    #Data.create_pickes(max_range=500,min_range=50,graph_type='ny_pickles')
+    #path = VehicleNetwork(vehicle_fuel='ELEC',start='Calgary,ab',end='London,on',vehicle_range=500)
+    #route = path.shortest_path()
     
     #file = Data(vehicle_fuel='ELEC',start='Calgary,ab',end='London,on',graph_type = 'nx_pickles').FileName()
     
