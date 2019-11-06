@@ -550,7 +550,7 @@ class VehicleNetwork(Data):
 #%%
 if __name__ == "__main__":
     
-    stations = Data(vehicle_fuel='ELEC',min_range=200,max_range=400,custom='NA')
+    stations = Data(vehicle_fuel='ELEC',min_range=200,max_range=400,custom='CA')
     G = stations.create_graph()
     df = stations.get_stations()
     
