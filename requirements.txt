@@ -8,7 +8,7 @@ chardet==3.0.4
 Click==7.0
 decorator==4.4.0
 Flask==1.1.1
-Flask-Cors==3.0.8
+Flask-Cors==3.0.9
 Flask-RESTful==0.3.7
 idna==2.8
 isort==4.3.21
