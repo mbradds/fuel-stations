@@ -1,6 +1,7 @@
 import networkx as nx
 import random
 import warnings
+import json
 from graph_data import Data
 
 
@@ -168,7 +169,8 @@ class VehicleNetwork(Data):
             path_data["total distance"] = None
             raise
             # TODO: raise a warning that the route didnt work, and then inform the user that a new path is being calculated with a higher range!
-
+        
+        path_data = json.dumps(path_data)
         return path_data  # TODO: round everything...
 
 

@@ -5,9 +5,9 @@ dependencies:
   - pandas
   - spyder
   - jupyter
-  - networkx
   - folium
   - flask
   - flask-restful
   - flask-cors
+  - networkx=2.5.1
 prefix: /home/grant/anaconda3/envs/fuel-stations

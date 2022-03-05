@@ -2,7 +2,7 @@ from flask import Flask
 from flask_restful import Resource, Api
 from flask_cors import CORS
 
-from nrel import VehicleNetwork
+from vehicle_network import VehicleNetwork
 
 app = Flask(__name__)
 CORS(app, resources={r'/*': {'origins': '*'}})

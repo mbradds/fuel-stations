@@ -1,0 +1,55 @@
+{
+  "name": "fuel-stations",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "sideEffects": false,
+  "engines": {
+    "node": "16.x",
+    "npm": "8.x"
+  },
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start-api": "conda run -n fuel-stations python vehicle_network_api/api.py",
+    "build": "webpack --config webpack.prod.js",
+    "dev": "webpack serve --config webpack.dev.js",
+    "prettier": "npx prettier --write .",
+    "lint": "npx eslint . --ext .ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mbradds/fuel-stations.git"
+  },
+  "author": "Grant Moss",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/mbradds/fuel-stations/issues"
+  },
+  "homepage": "https://github.com/mbradds/fuel-stations#readme",
+  "dependencies": {
+    "@types/leaflet": "^1.7.9",
+    "leaflet": "^1.7.1"
+  },
+  "devDependencies": {
+    "clean-webpack-plugin": "^4.0.0",
+    "css-loader": "^6.7.0",
+    "css-minimizer-webpack-plugin": "^3.4.1",
+    "eslint": "^8.10.0",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-plugin-import": "^2.25.4",
+    "handlebars": "^4.7.7",
+    "handlebars-loader": "^1.7.1",
+    "html-webpack-plugin": "^5.5.0",
+    "mini-css-extract-plugin": "^2.6.0",
+    "prettier": "^2.5.1",
+    "ts-loader": "^9.2.7",
+    "ts-node": "^10.6.0",
+    "typescript": "^4.6.2",
+    "webpack": "^5.70.0",
+    "webpack-cli": "^4.9.2",
+    "webpack-dev-server": "^4.7.4",
+    "webpack-merge": "^5.8.0"
+  }
+}

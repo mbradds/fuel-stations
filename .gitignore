@@ -1,8 +1,10 @@
+node_modules
+dist
 *.pyo
 *.pyc
 __pycache__
 api_key.json
 *.log
-nx_pickles/*.pickle
+vehicle_network_api/nx_pickles/*.pickle
 .ipynb_checkpoints
 /env
