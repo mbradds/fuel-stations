@@ -1,15 +1,8 @@
 *.pyo
 *.pyc
-*.txt
 __pycache__
-*.json
+api_key.json
 *.log
-*.sql
-*.xlsx
-*.twb
-*.twbx
-*.twbr
 nx_pickles/*.pickle
-test.py
 .ipynb_checkpoints
 /env
