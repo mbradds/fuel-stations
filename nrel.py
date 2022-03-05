@@ -33,7 +33,7 @@ class Location:
             raise
 
     @staticmethod
-    def api_url(key,country,url="https://developer.nrel.gov/api/alt-fuel-stations/v1.json?country=CO&api_key=YOUR_KEY_HERE"):
+    def api_url(key, country, url="https://developer.nrel.gov/api/alt-fuel-stations/v1.json?country=CO&api_key=YOUR_KEY_HERE"):
         url = url.replace("YOUR_KEY_HERE", key)
         url = url.replace("CO", country)
         return url
@@ -45,87 +45,22 @@ class Location:
         return df
 
     def get_stations(self):
-        # print('called get_stations')
         if os.path.isfile(self.nrel_data):
-            stations = pd.read_csv(
-                self.nrel_data,
-                dtype={
-                    "access_code": "object",
-                    "access_days_time": "object",
-                    "access_detail_code": "object",
-                    "cards_accepted": "object",
-                    "date_last_confirmed": "object",
-                    "expected_date": "object",
-                    "fuel_type_code": "object",
-                    "groups_with_access_code": "object",
-                    "id": "int64",
-                    "open_date": "object",
-                    "owner_type_code": "object",
-                    "status_code": "object",
-                    "station_name": "object",
-                    "station_phone": "object",
-                    "updated_at": "object",
-                    "facility_type": "object",
-                    "geocode_status": "object",
-                    "latitude": "float64",
-                    "longitude": "float64",
-                    "city": "object",
-                    "intersection_directions": "object",
-                    "plus4": "float64",
-                    "state": "object",
-                    "street_address": "object",
-                    "zip": "object",
-                    "country": "object",
-                    "bd_blends": "object",
-                    "cng_dispenser_num": "float64",
-                    "cng_fill_type_code": "object",
-                    "cng_psi": "object",
-                    "cng_renewable_source": "object",
-                    "cng_total_compression": "float64",
-                    "cng_total_storage": "float64",
-                    "cng_vehicle_class": "object",
-                    "e85_blender_pump": "object",
-                    "e85_other_ethanol_blends": "object",
-                    "ev_connector_types": "object",
-                    "ev_dc_fast_num": "float64",
-                    "ev_level1_evse_num": "float64",
-                    "ev_level2_evse_num": "float64",
-                    "ev_network": "object",
-                    "ev_network_web": "object",
-                    "ev_other_evse": "object",
-                    "ev_pricing": "object",
-                    "ev_renewable_source": "object",
-                    "hy_is_retail": "object",
-                    "hy_pressures": "object",
-                    "hy_standards": "object",
-                    "hy_status_link": "object",
-                    "lng_renewable_source": "float64",
-                    "lng_vehicle_class": "object",
-                    "lpg_primary": "object",
-                    "lpg_nozzle_types": "object",
-                    "ng_fill_type_code": "object",
-                    "ng_psi": "object",
-                    "ng_vehicle_class": "object",
-                    "access_days_time_fr": "object",
-                    "intersection_directions_fr": "object",
-                    "bd_blends_fr": "float64",
-                    "groups_with_access_code_fr": "object",
-                    "ev_pricing_fr": "object",
-                    "ev_network_ids": "object",
-                    "federal_agency": "object",
-                },
-            )
-            # print('read file from: '+os.getcwd())
+            used_cols = ["city", "zip", "country", "ev_pricing", "facility_type", "fuel_type_code", "latitude", "longitude", "state", "station_name", "street_address"]
+            stations = pd.read_csv(self.nrel_data, low_memory=False)
+            for col in stations:
+                if col not in used_cols:
+                    del stations[col]
+
         else:
             key = Data.config_file("api_key.json")["key"]
             # get both countries
             country_frames = []
-
             for country in self.country_options:
                 url = Location.api_url(key, country)
+                print("api request: " + str(url))
                 df = Location.request_api(url)
                 country_frames.append(df)
-                print("api request: " + str(url))
 
             stations = pd.concat(country_frames, axis=0, sort=False, ignore_index=True)
             stations.to_csv(self.nrel_data, index=False)
@@ -351,11 +286,11 @@ class Data(Location):
         Data.min_range = min_range
 
         fuel_options = ["ELEC", "LPG"] # , "CNG"]  # TODO: add fuel_options to self
-        Data.country_options.append("NA")
+        # Data.country_options.append("NA")
 
         for fuel in fuel_options:
             for country in Data.country_options:
-                network = Data(start='Calgary',end = 'Edmonton',vehicle_fuel=fuel,custom=country)
+                network = Data(start='Calgary,ab', end='Edmonton,ab', vehicle_fuel=fuel, custom=country)
                 network.create_graph()
 
     
@@ -476,8 +411,8 @@ if __name__ == "__main__":
     # G = stations.create_graph()
     # df = stations.get_stations()
     
-    # Data.create_pickes(max_range=500,min_range=50)
-    path = VehicleNetwork(vehicle_fuel='ELEC', start='Calgary,ab', end='London,on', vehicle_range=500, region="CA")
-    route = path.shortest_path()
+    Data.create_pickes(max_range=500,min_range=50)
+    # path = VehicleNetwork(vehicle_fuel='ELEC', start='Calgary,ab', end='London,on', vehicle_range=500, region="CA")
+    # route = path.shortest_path()
     
 

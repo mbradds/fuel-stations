@@ -9,7 +9,7 @@ __pycache__
 *.twb
 *.twbx
 *.twbr
-*.pickle
+nx_pickles/*.pickle
 test.py
 .ipynb_checkpoints
 /env

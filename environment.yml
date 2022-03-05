@@ -4,4 +4,10 @@ channels:
 dependencies:
   - pandas
   - spyder
+  - jupyter
+  - networkx
+  - folium
+  - flask
+  - flask-restful
+  - flask-cors
 prefix: /home/grant/anaconda3/envs/fuel-stations
