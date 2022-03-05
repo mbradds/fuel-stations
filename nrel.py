@@ -7,16 +7,13 @@ import random
 from math import radians, cos, sin, asin, sqrt
 from itertools import combinations
 import warnings
-import pickle
-from networkY import Graph
 headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'}
-#%%
 
 
 class Location:
 
     # TODO: move the api/data methods here
-    def __init__(self, vehicle_fuel, start, end, nrel_data="fuel_stations.csv",region=None):
+    def __init__(self, vehicle_fuel, start, end, nrel_data="fuel_stations.csv", region=None):
         self.vehicle_fuel = vehicle_fuel
         self.nrel_data = nrel_data
         self.start = start
@@ -140,11 +137,9 @@ class Location:
         return(stations)
 
     def find_region(self):
-
         df = self.get_stations()
-
+        
         def get_random_location(loc, df):
-
             df = df[df["city"] == loc].copy()
             unique = [str(c).capitalize() + "_" + str(p) for c, p in zip(df["city"], df["zip"])]
             unique = list(set(unique))
@@ -155,7 +150,6 @@ class Location:
                 warnings.warn("There are no " + self.vehicle_fuel + " stations " + "in " + loc)
             # location = locations.sample(n=1) #should be one row of a dataframe
             n = random.choice(unique)
-
             return n
 
         def split_location(loc):
@@ -194,7 +188,7 @@ class Location:
             return (station_count[max_stations], node)
         
         
-        if self.region == None:
+        if self.region != None:
             start_country, start_node = split_location(self.start)
             end_country, end_node = split_location(self.end)
             if start_country == end_country:
@@ -203,26 +197,24 @@ class Location:
                 r = 'NA'
         else:
             r = self.region
-            start_node,end_node = None,None
+            start_node, end_node = None, None
             
         if r != "NA":
             df = df[df["country"] == r].copy()
-
-        return (r, start_node, end_node, df)
+        
+        return r, start_node, end_node, df
 
 
 class Data(Location):
-
     # TODO: use setter on region depending on start and end values.
     """
     NREL API documentation: https://developer.nrel.gov/docs/transportation/alt-fuel-stations-v1/
     """
-    #max_range = 500
-    #min_range = 50
+    
     country_options = ['CA','US']
     
-    def __init__(self,vehicle_fuel,
-                 graph_type='nx_pickles',
+    def __init__(self,
+                 vehicle_fuel,
                  max_range = 500,
                  min_range = 50,
                  start=None,
@@ -230,8 +222,7 @@ class Data(Location):
                  nrel_data='fuel_stations.csv',
                  custom=None):
         
-        Location.__init__(self,vehicle_fuel,start,end,region=custom)
-        self.graph_type = graph_type
+        Location.__init__(self, vehicle_fuel, start, end, region=custom)
         self.vehicle_fuel = vehicle_fuel
         self.nrel_data = nrel_data
         self.max_range = max_range
@@ -241,7 +232,7 @@ class Data(Location):
         self.region, self.start_node, self.end_node, self.stations = Location.find_region(self)
 
     def FileName(self):
-        return(self.graph_type+'/'+self.vehicle_fuel+'_'+self.region+'_'+'Max_'+str(self.max_range)+'_'+'Min_'+str(self.min_range)+'.pickle')
+        return('nx_pickles/'+self.vehicle_fuel+'_'+self.region+'_'+'Max_'+str(self.max_range)+'_'+'Min_'+str(self.min_range)+'.pickle')
         
 
     @staticmethod
@@ -290,65 +281,7 @@ class Data(Location):
         c = 2 * asin(sqrt(a)) 
         r = 6371 # Radius of earth in kilometers. Use 3956 for miles, 6371 for km
         return (int(round(c * r,0)))
-    
-    def create_graph_ny(self):
-        print('called create_graph_ny')
-        '''
-        creates a semi-complete graph if there isnt already one available in binary form. The graph connectivity is limited by the maximum range.
-        A higher max range allows you to view hypothetical vehicle routes that are not available with current EV technology, but it makes the 
-        optimal path calculation much slower.
-        '''
-        #TODO: look at casting types for node attributes and edge weight. This may reduce pickle file size
-        #TODO: remove limit instance variable after testing is complete!            
-    
-        file_name = self.FileName()
-                
-        if os.path.isfile(file_name):
-            G = Graph.readPickle(file_name)
-            print('read pickle object: '+file_name)
-        else:
-            #ceates a complete graph if there isnt one already
-            print('creating pickle object: '+file_name)
-            print('DF length: '+str(len(self.stations)))
-            #self.stations.to_csv(file_name,index=False) #for testing
-            G = Graph()
-            for index,row in self.stations.iterrows():
-                
-                #TODO: add more descriptors (columns) to the graph if neccecary
-                G.addNode(node=str(row['city'])+'_'+str(row['zip']),
-                           attributes={'city':row['city'],
-                                       'country':row['country'],
-                                       'ev_pricing':row['ev_pricing'],
-                                       'facility_type':row['facility_type'],
-                                       'fuel':row['fuel_type_code'],
-                                       'lat':row['latitude'],
-                                       'long':row['longitude'],
-                                       'province':row['state'],
-                                       'station_name':row['station_name'],
-                                       'address':row['street_address']})
-            
-            #add the graph edges
-            print('Nodes: '+str(G.number_of_nodes()))
-            edges = list(combinations(G.nodes(),2))
-            print('Edges: '+str(G.number_of_edges()))
-            
-            for edge in edges:
-                lat1,long1 = G.node(edge[0])['attributes']['lat'],G.node(edge[0])['attributes']['long']
-                lat2,long2 = G.node(edge[1])['attributes']['lat'],G.node(edge[1])['attributes']['long']
-                distance = self.haversine(long1,lat1,long2,lat2)
-                #there is no range requirement
-                        
-                if distance > self.max_range or distance < self.min_range:
-                    None #the vehicle cant make it from node 1 to node 2
-                else:    
-                    G.addEdge(edge[0],edge[1],weight=distance)
-                                            
-            #pickle the graph once it is created
-            Graph.savePickle(G,file_name)
-            print('created new pickle object: '+file_name+' with max range '+str(self.max_range))
-            
-        return(self.stations)
-    
+
     
     def create_graph(self):
         print('called create_graph')
@@ -393,8 +326,8 @@ class Data(Location):
             print("Edges: " + str(len(edges)))
 
             for edge in edges:
-                lat1, long1 = G.node[edge[0]]["lat"], G.node[edge[0]]["long"]
-                lat2, long2 = G.node[edge[1]]["lat"], G.node[edge[1]]["long"]
+                lat1, long1 = G.nodes[edge[0]]["lat"], G.nodes[edge[0]]["long"]
+                lat2, long2 = G.nodes[edge[1]]["lat"], G.nodes[edge[1]]["long"]
                 distance = self.haversine(long1, lat1, long2, lat2)
                 # there is no range requirement
 
@@ -410,26 +343,21 @@ class Data(Location):
         return G
 
     @staticmethod
-    def create_pickes(max_range=None,min_range=None,graph_type='nx_pickles'): #TODO: make this work...
+    def create_pickes(max_range=None, min_range=None): #TODO: make this work...
         '''
         convenience method for creating all pickles at once
         '''
         Data.max_range = max_range
         Data.min_range = min_range
 
-        fuel_options = ["ELEC", "LPG", "CNG"]  # TODO: add fuel_options to self
+        fuel_options = ["ELEC", "LPG"] # , "CNG"]  # TODO: add fuel_options to self
         Data.country_options.append("NA")
 
         for fuel in fuel_options:
             for country in Data.country_options:
-                
-                network = Data(start='Calgary',end = 'Edmonton',vehicle_fuel=fuel,custom=country,graph_type=graph_type)
-                if graph_type == 'nx_pickles':
-                    network.create_graph()
-                elif graph_type == 'ny_pickles':
-                    network.create_graph_ny()
-                else:
-                    print('Pick nx_pickles or ny_pickles')
+                network = Data(start='Calgary',end = 'Edmonton',vehicle_fuel=fuel,custom=country)
+                network.create_graph()
+
     
             
 #TODO: make the graph (G) an intance variable. This will make it easier to modify the graph range in a VehicleNetwork method
@@ -442,13 +370,12 @@ class VehicleNetwork(Data):
     when needed
     '''
     
-    def __init__(self,vehicle_fuel,start,end,vehicle_range,graph_type='nx_pickles'):
-        Data.__init__(self,vehicle_fuel,start,end,graph_type)
+    def __init__(self, vehicle_fuel, start, end, vehicle_range, region):
+        Data.__init__(self, vehicle_fuel=vehicle_fuel, start=start, end=end, custom=region)
         self.vehicle_fuel = vehicle_fuel #user must select one fuel type.
         self.vehicle_range = vehicle_range #user sets the range for their vehicle
         self.G = self.create_graph() #read in the graph
         self.refill_locations = self.stations#read in the df. Make sure that refill_locations is used throughout this class!
-        self.graph_type = graph_type
         print('Region: '+self.region)        
     
     
@@ -470,10 +397,8 @@ class VehicleNetwork(Data):
 
     # setter
     def vehicle_route(self):
-
         remove_list = []
         for paths in self.G.edges(data=True):
-
             n1 = paths[0]
             n2 = paths[1]
             distance = paths[2]["weight"]
@@ -505,7 +430,6 @@ class VehicleNetwork(Data):
             path_data_detail = []
             cumulative_distance, weight = 0, 0
             for stop_number, stop in enumerate(path):
-
                 if stop_number == 0:
                     None
                 elif stop_number < len(path):
@@ -514,7 +438,7 @@ class VehicleNetwork(Data):
                 else:
                     None
 
-                attributes = self.G.node[stop]
+                attributes = self.G.nodes[stop]
                 path_data_detail.append(
                     {
                         stop: {
@@ -535,7 +459,6 @@ class VehicleNetwork(Data):
 
             path_data["total distance"] = cumulative_distance
             path_data["detailed path"] = path_data_detail
-            # if a path can be found:
             path_data["route found"] = True
         except:
             path_data["route found"] = False
@@ -547,18 +470,14 @@ class VehicleNetwork(Data):
         return path_data  # TODO: round everything...
 
 
-#%%
 if __name__ == "__main__":
     
-    stations = Data(vehicle_fuel='ELEC',min_range=200,max_range=400,custom='CA')
-    G = stations.create_graph()
-    df = stations.get_stations()
+    # stations = Data(vehicle_fuel='ELEC',min_range=200,max_range=400,custom='CA')
+    # G = stations.create_graph()
+    # df = stations.get_stations()
     
-    #Data.create_pickes(max_range=500,min_range=50,graph_type='ny_pickles')
-    #path = VehicleNetwork(vehicle_fuel='ELEC',start='Calgary,ab',end='London,on',vehicle_range=500)
-    #route = path.shortest_path()
+    # Data.create_pickes(max_range=500,min_range=50)
+    path = VehicleNetwork(vehicle_fuel='ELEC', start='Calgary,ab', end='London,on', vehicle_range=500, region="CA")
+    route = path.shortest_path()
     
-    #file = Data(vehicle_fuel='ELEC',start='Calgary,ab',end='London,on',graph_type = 'nx_pickles').FileName()
-    
-#%%
 

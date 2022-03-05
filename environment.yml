@@ -1,0 +1,7 @@
+name: fuel-stations
+channels:
+  - defaults
+dependencies:
+  - pandas
+  - spyder
+prefix: /home/grant/anaconda3/envs/fuel-stations
