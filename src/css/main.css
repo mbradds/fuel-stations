@@ -1,3 +1,15 @@
+@import url("bootstrap/dist/css/bootstrap.min.css");
+
+html,
+body,
+.container-fluid,
+.map-row,
+.map-col {
+  height: 100% !important;
+  padding-right: 0px !important;
+  padding-left: 0px !important;
+}
+
 body {
   font-size: 20px;
   line-height: 1.65em;
