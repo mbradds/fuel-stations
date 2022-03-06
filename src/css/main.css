@@ -2,17 +2,18 @@
 
 html,
 body,
-.container-fluid,
-.map-row,
-.map-col {
+.container-fluid {
   height: 100% !important;
   padding-right: 0px !important;
   padding-left: 0px !important;
 }
 
-body {
-  font-size: 20px;
-  line-height: 1.65em;
+#map-form {
+  display: flex !important;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  height: 7%;
 }
 
 @media (hover: none) {
@@ -26,11 +27,5 @@ body {
   justify-content: center;
   align-items: center;
   width: 100%;
-  height: 100%;
-}
-
-.leaflet-control-container,
-.leaflet-top.leaflet-left,
-.options-bar {
-  width: 100% !important;
+  height: 93%;
 }

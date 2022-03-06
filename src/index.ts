@@ -13,23 +13,33 @@ function setUpMap() {
     initZoomLevel: 4,
     zoomControl: false,
   });
-  map.addResetBtn();
+  map.addOptionFormHtml();
   return map;
 }
 
 async function main() {
   const map = setUpMap();
-  const data = await routeData(
+  // const data = await routeData(
+  //   "ELEC",
+  //   "Calgary,ab",
+  //   "London,on",
+  //   500,
+  //   "CA",
+  //   "no",
+  //   "GET"
+  // );
+  const cityOptions = routeData(
     "ELEC",
-    "Calgary,ab",
-    "London,on",
+    "None",
+    "None",
     500,
     "CA",
-    "no",
+    "yes",
     "GET"
   );
+  map.populateCityDropDowns(cityOptions);
   // const data = await putRouteData("LPG", "Calgary,ab", "London,on", 500, "US");
-  map.addRoute(data);
+  // map.addRoute(data);
 }
 
 main();

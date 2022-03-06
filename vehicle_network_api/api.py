@@ -1,7 +1,6 @@
 from flask import Flask
 from flask_restful import Resource, Api
 from flask_cors import CORS
-import sys
 from vehicle_network import VehicleNetwork
 
 app = Flask(__name__)
@@ -13,7 +12,6 @@ initpath = VehicleNetwork(vehicle_fuel="ELEC", region="CA")
 class VehicleRouteService(Resource):
 
     def __init__(self, f_type="ELEC", region="CA"):
-        print('Hello world!', file=sys.stderr)
         self.f_type = "ELEC"
         self.region = "CA"
         self.vehicle_range = 500

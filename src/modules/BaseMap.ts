@@ -18,13 +18,29 @@ interface Config {
 
 export class BaseMap extends L.Map {
   resetBtnId: string;
+  optionFormId: string;
+  selectFromCityId: string;
+  selectToCityId: string;
+  findRouteId: string;
   config: Config;
 
-  constructor(div: string, config: Config, resetBtnId = "reset-map") {
+  constructor(
+    div: string,
+    config: Config,
+    optionFormId = "map-form",
+    resetBtnId = "reset-map",
+    selectFromCityId = "select-from-city",
+    selectToCityId = "select-to-city",
+    findRouteId = "find-route"
+  ) {
     super(div, config);
     this.config = config;
     this.setView(config.initZoomTo, config.initZoomLevel);
     this.resetBtnId = resetBtnId;
+    this.optionFormId = optionFormId;
+    this.selectFromCityId = selectFromCityId;
+    this.selectToCityId = selectToCityId;
+    this.findRouteId = findRouteId;
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       attribution:
         '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
@@ -40,18 +56,69 @@ export class BaseMap extends L.Map {
     }
   }
 
-  addResetBtn() {
-    const resetControl = new L.Control({ position: "topleft" });
-    const resetId = this.resetBtnId;
-    resetControl.onAdd = function resetOnAdd() {
-      const resetDiv = L.DomUtil.create("div", "options-bar");
-      const resetHtml = `<button id="${resetId}" type="button" class="btn btn-secondary btn-lg">Reset Map</button>`;
-      const cardHtml = `<div class="card"><div class="card-body">${resetHtml}</div></div>`;
-      resetDiv.innerHTML = cardHtml;
-      return resetDiv;
-    };
-    resetControl.addTo(this);
+  addOptionFormHtml() {
+    const optionFormDiv = document.getElementById(this.optionFormId);
+    const btnHtml = (id: string, text: string) =>
+      `<button id="${id}" type="button" class="btn btn-secondary">${text}</button>`;
+    const citySelectSpinners = (
+      id: string
+    ) => `<div id="${id}"> <div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div></div>
+  `;
+
+    if (optionFormDiv) {
+      optionFormDiv.innerHTML = `${citySelectSpinners(
+        this.selectFromCityId
+      )} ${citySelectSpinners(this.selectToCityId)} ${btnHtml(
+        this.findRouteId,
+        "Find Route"
+      )} ${btnHtml(this.resetBtnId, "ResetMap")}`;
+    }
     this.resetListener();
+  }
+
+  getSelectElements() {
+    const fromSelect = <any>document.getElementById(this.selectFromCityId);
+    const toSelect = <any>document.getElementById(this.selectToCityId);
+    return [fromSelect, toSelect];
+  }
+
+  populateCityDropDowns(promiseList: Promise<string[]>) {
+    let optionHtml = "";
+    promiseList.then((cities: string[]) => {
+      cities.forEach((city) => {
+        optionHtml += `<option value="${city}">`;
+      });
+      const fromHtml = `<input class="form-control" list="fromDatalistOptions" id="fromDatalist" placeholder="Select Start City">
+      <datalist id="fromDatalistOptions">
+      ${optionHtml}
+      </datalist>`;
+      const toHtml = `<input class="form-control" list="toDatalistOptions" id="toDatalist" placeholder="Select End City">
+      <datalist id="toDatalistOptions">
+      ${optionHtml}
+      </datalist>`;
+
+      const [fromSelect, toSelect] = this.getSelectElements();
+      if (fromSelect && toSelect) {
+        fromSelect.innerHTML = fromHtml;
+        toSelect.innerHTML = toHtml;
+      }
+      this.findRouteListener();
+    });
+  }
+
+  findRouteListener() {
+    const findRouteElement = document.getElementById(this.findRouteId);
+    const [fromSelect, toSelect] = [
+      <any>document.getElementById("fromDatalist"),
+      <any>document.getElementById("toDatalist"),
+    ];
+    if (findRouteElement && fromSelect && toSelect) {
+      findRouteElement.addEventListener("click", () => {
+        const fromCity = fromSelect.value;
+        const toCity = toSelect.value;
+        console.log(fromCity, toCity);
+      });
+    }
   }
 
   addRoute(routeData: RouteApiResponse) {
