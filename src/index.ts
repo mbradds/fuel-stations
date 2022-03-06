@@ -11,6 +11,7 @@ function setUpMap() {
     zoomSnap: 0.5,
     initZoomTo: L.latLng(49.9, -97.1),
     initZoomLevel: 4,
+    zoomControl: false,
   });
   map.addResetBtn();
   return map;
@@ -19,7 +20,7 @@ function setUpMap() {
 async function main() {
   const map = setUpMap();
   const data = await getRouteData("ELEC", "Calgary,ab", "London,on", 500, "CA");
-  console.log(data);
+  map.addRoute(data);
 }
 
 main();

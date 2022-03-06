@@ -1,5 +1,6 @@
 import requests
 import pandas as pd
+import numpy as np
 import os
 import json
 import networkx as nx
@@ -78,6 +79,8 @@ class Data:
             for col in stations:
                 if col not in used_cols:
                     del stations[col]
+                else:
+                    stations[col] = stations[col].replace({np.nan: None})
 
         else:
             key = Data.get_config_file("api_key.json")["key"]
@@ -96,6 +99,8 @@ class Data:
         if self.region != None:
             if self.region != 'NA':
                 stations = stations[stations["country"] == self.region].copy()
+                
+        stations = stations.replace({np.nan: None})
         return stations
 
 
@@ -140,7 +145,6 @@ class Data:
             print("DF length: " + str(len(self.stations)))
             G = nx.Graph()
             for index, row in self.stations.iterrows():
-
                 # TODO: add more descriptors (columns) to the graph if neccecary
                 G.add_node(
                     str(row["city"]) + "_" + str(row["zip"]),
@@ -179,5 +183,7 @@ class Data:
 
 
 if __name__ == "__main__":
-    None
+    # data = Data("ELEC", region="CA")
+    Data.create_pickes(500, 50)
+    # df = data.get_stations()
 

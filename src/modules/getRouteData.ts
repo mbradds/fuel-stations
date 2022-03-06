@@ -9,7 +9,8 @@ export async function getRouteData(
     const url = `http://10.0.0.128:5000/api/${fuelType}/${startCity}/${endCity}/${vehicleRange}/${region}`;
     const response = await fetch(url);
     const data = await response.json();
-    return data;
+    const objData = JSON.parse(data);
+    return objData;
   } catch (err) {
     return err;
   }

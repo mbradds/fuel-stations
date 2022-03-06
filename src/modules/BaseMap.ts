@@ -1,10 +1,19 @@
 import * as L from "leaflet";
+import { RouteApiResponse } from "./interfaces";
+
+L.Icon.Default.imagePath = "./dist/images";
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: require("leaflet/dist/images/marker-icon-2x.png"),
+  iconUrl: require("leaflet/dist/images/marker-icon.png"),
+  shadowUrl: require("leaflet/dist/images/marker-shadow.png"),
+});
 
 interface Config {
   zoomDelta: number;
   zoomSnap: number;
   initZoomTo: L.LatLng;
   initZoomLevel: number;
+  zoomControl: boolean;
 }
 
 export class BaseMap extends L.Map {
@@ -32,14 +41,37 @@ export class BaseMap extends L.Map {
   }
 
   addResetBtn() {
-    const resetControl = new L.Control({ position: "bottomleft" });
+    const resetControl = new L.Control({ position: "topleft" });
     const resetId = this.resetBtnId;
     resetControl.onAdd = function resetOnAdd() {
-      const resetDiv = L.DomUtil.create("div");
-      resetDiv.innerHTML = `<button id="${resetId}" type="button" class="btn btn-secondary btn-lg">Reset Map</button>`;
+      const resetDiv = L.DomUtil.create("div", "options-bar");
+      const resetHtml = `<button id="${resetId}" type="button" class="btn btn-secondary btn-lg">Reset Map</button>`;
+      const cardHtml = `<div class="card"><div class="card-body">${resetHtml}</div></div>`;
+      resetDiv.innerHTML = cardHtml;
       return resetDiv;
     };
     resetControl.addTo(this);
     this.resetListener();
+  }
+
+  addRoute(routeData: RouteApiResponse) {
+    console.log(routeData);
+    const markers = routeData.detailed_path.map((stop) => {
+      return L.marker([stop.lat, stop.lng], {
+        icon: L.icon({
+          iconUrl: "./images/marker-icon.png",
+          iconAnchor: [10, 40],
+        }),
+      })
+        .bindPopup(`${stop.node}`)
+        .addTo(this);
+    });
+    const markerFeature = new L.FeatureGroup(markers);
+    this.flyToBounds(markerFeature.getBounds(), {
+      duration: 0.25,
+      easeLinearity: 1,
+      padding: [25, 25],
+    });
+    return markerFeature;
   }
 }

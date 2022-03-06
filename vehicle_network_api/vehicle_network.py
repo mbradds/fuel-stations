@@ -121,14 +121,14 @@ class VehicleNetwork(Data):
         path_data = {}
         path_data["fuel"] = self.vehicle_fuel
         path_data["region"] = self.region
-        path_data["user input start"] = self.start
-        path_data["user input end"] = self.end
-        path_data["vehicle range"] = self.vehicle_range
+        path_data["start"] = self.start
+        path_data["end"] = self.end
+        path_data["vehicle_range"] = self.vehicle_range
 
         try:
             path = nx.shortest_path(self.G, source=source, target=target)
-            path_data["route"] = path
-            path_data["number of stops"] = len(path)
+            # path_data["route"] = path
+            # path_data["number_of_stops"] = len(path)
             # the path variable is a list of nodes. Now access node attributes to get lat/long,etc
             path_data_detail = []
             cumulative_distance, weight = 0, 0
@@ -144,32 +144,30 @@ class VehicleNetwork(Data):
                 attributes = self.G.nodes[stop]
                 path_data_detail.append(
                     {
-                        stop: {
-                            "latitude": attributes["lat"],
-                            "longitude": attributes["long"],
-                            "fuel": attributes["fuel"],
-                            "city": attributes["city"],
-                            "ev_pricing": attributes["ev_pricing"],
-                            "facility_type": attributes["facility_type"],
-                            "address": attributes["address"],
-                            "province": attributes["province"],
-                            "station_name": attributes["station_name"],
-                            "cumulative_distance": cumulative_distance,
-                            "distance from previous node": weight,
-                        }
+                        "node": stop,
+                        "lat": attributes["lat"],
+                        "lng": attributes["long"],
+                        "city": attributes["city"],
+                        "ev_pricing": attributes["ev_pricing"],
+                        "facility_type": attributes["facility_type"],
+                        "address": attributes["address"],
+                        "province": attributes["province"],
+                        "station_name": attributes["station_name"],
+                        "cumulative_distance": cumulative_distance,
+                        "distance_from_prev_node": weight,
                     }
                 )
 
-            path_data["total distance"] = cumulative_distance
-            path_data["detailed path"] = path_data_detail
-            path_data["route found"] = True
+            path_data["total_distance"] = cumulative_distance
+            path_data["detailed_path"] = path_data_detail
+            path_data["route_found"] = True
         except:
-            path_data["route found"] = False
-            path_data["detailed path"] = None
-            path_data["total distance"] = None
+            path_data["route_found"] = False
+            path_data["detailed_path"] = None
+            path_data["total_distance"] = None
             raise
             # TODO: raise a warning that the route didnt work, and then inform the user that a new path is being calculated with a higher range!
-        
+
         path_data = json.dumps(path_data)
         return path_data  # TODO: round everything...
 

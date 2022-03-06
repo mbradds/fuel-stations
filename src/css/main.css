@@ -28,3 +28,9 @@ body {
   width: 100%;
   height: 100%;
 }
+
+.leaflet-control-container,
+.leaflet-top.leaflet-left,
+.options-bar {
+  width: 100% !important;
+}

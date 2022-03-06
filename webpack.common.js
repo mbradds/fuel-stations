@@ -49,13 +49,13 @@ export default {
       },
       {
         test: /\.png$/,
-        exclude: /node_modules/,
+        // exclude: /node_modules/,
         use: {
           loader: "file-loader",
           options: {
             publicPath: "dist/images/",
             outputPath: "images",
-            name: "[name].[contenthash].png",
+            name: "[name].png",
           },
         },
         type: "javascript/auto",
