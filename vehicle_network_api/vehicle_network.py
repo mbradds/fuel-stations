@@ -13,18 +13,15 @@ class VehicleNetwork(Data):
     when needed
     '''
 
-    def __init__(self, vehicle_fuel, start, end, vehicle_range, region):
+    def __init__(self, vehicle_fuel, region, vehicle_range=500):
         Data.__init__(self, vehicle_fuel=vehicle_fuel, region=region)
         self.vehicle_fuel = vehicle_fuel #user must select one fuel type.
-        self.start = start
-        self.end = end
         self.vehicle_range = vehicle_range #user sets the range for their vehicle
         self.G = self.create_graph() #read in the graph
-        self.refill_locations = self.stations#read in the df. Make sure that refill_locations is used throughout this class!
         print('Region: '+self.region)
 
 
-    def find_region(self):
+    def find_region(self, start, end):
         df = self.stations
 
         def get_random_location(loc, df):
@@ -78,8 +75,8 @@ class VehicleNetwork(Data):
 
 
         if self.region != None:
-            start_country, start_node = split_location(self.start)
-            end_country, end_node = split_location(self.end)
+            start_country, start_node = split_location(start)
+            end_country, end_node = split_location(end)
             if start_country == end_country:
                 r = start_country
             else:
@@ -96,7 +93,9 @@ class VehicleNetwork(Data):
 
     # this probably isnt needed. All start/end user input should be verified in the Data class
     def available_cities(self):
-        return list(self.refill_locations["city"].unique())
+        options = [city+","+state for city, state in zip(self.stations["city"], self.stations["state"])]
+        options = sorted(list(set(options)))
+        return json.dumps(options)
 
 
     def vehicle_route(self):
@@ -112,17 +111,16 @@ class VehicleNetwork(Data):
         self.G.remove_edges_from(remove_list)
 
 
-    def shortest_path(self):
-
-        source, target = self.find_region()
+    def shortest_path(self, start, end):
+        source, target = self.find_region(start, end)
         self.vehicle_route()
 
         # TODO: make sure that self.G has been properly filtered!
         path_data = {}
         path_data["fuel"] = self.vehicle_fuel
         path_data["region"] = self.region
-        path_data["start"] = self.start
-        path_data["end"] = self.end
+        path_data["start"] = start
+        path_data["end"] = end
         path_data["vehicle_range"] = self.vehicle_range
 
         try:
@@ -174,12 +172,11 @@ class VehicleNetwork(Data):
 
 if __name__ == "__main__":
 
-    # stations = Data(vehicle_fuel='ELEC',min_range=200,max_range=400,custom='CA')
-    # G = stations.create_graph()
-    # df = stations.get_stations()
-
     # Data.create_pickes(max_range=500, min_range=50)
-    path = VehicleNetwork(vehicle_fuel='ELEC', start='Calgary,ab', end='London,on', vehicle_range=500, region="CA")
-    route = path.shortest_path()
+    # path = VehicleNetwork(vehicle_fuel='ELEC', start='Calgary,ab', end='London,on', vehicle_range=500, region="CA")
+    # route = path.shortest_path()
+    
+    path = VehicleNetwork(vehicle_fuel="ELEC" , region="CA")
+    cities = path.available_cities()
 
 

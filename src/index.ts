@@ -1,7 +1,7 @@
 import * as L from "leaflet";
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
 import { BaseMap } from "./modules/BaseMap";
-import { getRouteData } from "./modules/getRouteData";
+import { routeData } from "./modules/routeData";
 import "leaflet/dist/leaflet.css";
 import "./css/main.css";
 
@@ -19,7 +19,16 @@ function setUpMap() {
 
 async function main() {
   const map = setUpMap();
-  const data = await getRouteData("ELEC", "Calgary,ab", "London,on", 500, "CA");
+  const data = await routeData(
+    "ELEC",
+    "Calgary,ab",
+    "London,on",
+    500,
+    "CA",
+    "no",
+    "GET"
+  );
+  // const data = await putRouteData("LPG", "Calgary,ab", "London,on", 500, "US");
   map.addRoute(data);
 }
 
