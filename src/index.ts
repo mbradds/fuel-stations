@@ -7,11 +7,11 @@ import "./css/main.css";
 
 function setUpMap() {
   const map = new BaseMap("map", {
-    zoomDelta: 1,
+    zoomDelta: 0.5,
     zoomSnap: 0.5,
     initZoomTo: L.latLng(49.9, -97.1),
-    initZoomLevel: 4,
-    zoomControl: false,
+    initZoomLevel: 4.5,
+    zoomControl: true,
   });
   map.addOptionFormHtml();
   return map;
@@ -19,15 +19,6 @@ function setUpMap() {
 
 async function main() {
   const map = setUpMap();
-  // const data = await routeData(
-  //   "ELEC",
-  //   "Calgary,ab",
-  //   "London,on",
-  //   500,
-  //   "CA",
-  //   "no",
-  //   "GET"
-  // );
   const cityOptions = routeData(
     "ELEC",
     "None",
@@ -38,8 +29,6 @@ async function main() {
     "GET"
   );
   map.populateCityDropDowns(cityOptions);
-  // const data = await putRouteData("LPG", "Calgary,ab", "London,on", 500, "US");
-  // map.addRoute(data);
 }
 
 main();

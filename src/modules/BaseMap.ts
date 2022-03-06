@@ -1,4 +1,5 @@
 import * as L from "leaflet";
+import { routeData } from "./routeData";
 import { RouteApiResponse } from "./interfaces";
 
 L.Icon.Default.imagePath = "./dist/images";
@@ -22,6 +23,8 @@ export class BaseMap extends L.Map {
   selectFromCityId: string;
   selectToCityId: string;
   findRouteId: string;
+  loadingId: string;
+  markerFeature: undefined | L.FeatureGroup;
   config: Config;
 
   constructor(
@@ -31,7 +34,9 @@ export class BaseMap extends L.Map {
     resetBtnId = "reset-map",
     selectFromCityId = "select-from-city",
     selectToCityId = "select-to-city",
-    findRouteId = "find-route"
+    findRouteId = "find-route",
+    loadingId = "loading-spinner",
+    markerFeature = undefined
   ) {
     super(div, config);
     this.config = config;
@@ -41,6 +46,8 @@ export class BaseMap extends L.Map {
     this.selectFromCityId = selectFromCityId;
     this.selectToCityId = selectToCityId;
     this.findRouteId = findRouteId;
+    this.loadingId = loadingId;
+    this.markerFeature = markerFeature;
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       attribution:
         '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
@@ -51,9 +58,24 @@ export class BaseMap extends L.Map {
     const resetMapElement = document.getElementById(this.resetBtnId);
     if (resetMapElement) {
       resetMapElement.addEventListener("click", () => {
+        this.clearMarkers();
         this.setView(this.config.initZoomTo, this.config.initZoomLevel);
       });
     }
+  }
+
+  clearMarkers() {
+    if (this.markerFeature) {
+      this.markerFeature.eachLayer((marker) => {
+        marker.remove();
+      });
+      this.markerFeature = undefined;
+    }
+  }
+
+  getSpinnerHtml(id: string) {
+    return `<div id="${id}"> <div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div></div>
+  `;
   }
 
   addOptionFormHtml() {
@@ -66,13 +88,22 @@ export class BaseMap extends L.Map {
   `;
 
     if (optionFormDiv) {
-      optionFormDiv.innerHTML = `${citySelectSpinners(
+      optionFormDiv.innerHTML = `${this.getSpinnerHtml(
         this.selectFromCityId
-      )} ${citySelectSpinners(this.selectToCityId)} ${btnHtml(
+      )} ${this.getSpinnerHtml(this.selectToCityId)} ${btnHtml(
         this.findRouteId,
         "Find Route"
-      )} ${btnHtml(this.resetBtnId, "ResetMap")}`;
+      )}<div id="${this.loadingId}" ></div>`;
     }
+
+    const resetControl = new L.Control({ position: "bottomleft" });
+    const resetBtnHtml = btnHtml(this.resetBtnId, "Reset Map");
+    resetControl.onAdd = function resetOnAdd() {
+      const resetDiv = L.DomUtil.create("div");
+      resetDiv.innerHTML = resetBtnHtml;
+      return resetDiv;
+    };
+    resetControl.addTo(this);
     this.resetListener();
   }
 
@@ -108,21 +139,38 @@ export class BaseMap extends L.Map {
 
   findRouteListener() {
     const findRouteElement = document.getElementById(this.findRouteId);
+    const spinnerElement = document.getElementById(this.loadingId);
     const [fromSelect, toSelect] = [
       <any>document.getElementById("fromDatalist"),
       <any>document.getElementById("toDatalist"),
     ];
     if (findRouteElement && fromSelect && toSelect) {
-      findRouteElement.addEventListener("click", () => {
+      findRouteElement.addEventListener("click", async () => {
+        this.clearMarkers();
+        if (spinnerElement) {
+          spinnerElement.innerHTML = this.getSpinnerHtml("");
+        }
         const fromCity = fromSelect.value;
         const toCity = toSelect.value;
-        console.log(fromCity, toCity);
+        const data = await routeData(
+          "ELEC",
+          fromCity,
+          toCity,
+          500,
+          "CA",
+          "no",
+          "GET"
+        );
+        this.addRoute(data);
+        if (spinnerElement) {
+          spinnerElement.innerHTML = "";
+        }
       });
     }
   }
 
   addRoute(routeData: RouteApiResponse) {
-    console.log(routeData);
+    // console.log(routeData);
     const markers = routeData.detailed_path.map((stop) => {
       return L.marker([stop.lat, stop.lng], {
         icon: L.icon({
@@ -139,6 +187,6 @@ export class BaseMap extends L.Map {
       easeLinearity: 1,
       padding: [25, 25],
     });
-    return markerFeature;
+    this.markerFeature = markerFeature;
   }
 }
