@@ -146,8 +146,10 @@ class Data:
             G = nx.Graph()
             for index, row in self.stations.iterrows():
                 # TODO: add more descriptors (columns) to the graph if neccecary
+                node_name = str(row["city"]) + "_" + str(row["zip"])
+                node_name = node_name.replace(" ", "_")
                 G.add_node(
-                    str(row["city"]) + "_" + str(row["zip"]),
+                    node_name,
                     city=row["city"],
                     country=row["country"],
                     ev_pricing=row["ev_pricing"],

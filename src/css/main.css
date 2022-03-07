@@ -13,7 +13,7 @@ body,
   flex-direction: row;
   align-items: center;
   justify-content: left;
-  height: 7%;
+  height: 10%;
 }
 
 @media (hover: none) {
@@ -27,13 +27,13 @@ body,
   justify-content: center;
   align-items: center;
   width: 100%;
-  height: 93%;
+  height: 90%;
 }
 
-#reset-map {
+/* #find-route {
   margin-left: auto;
   order: 2;
-}
+} */
 
 #select-from-city {
   margin-left: 10px;
@@ -42,4 +42,10 @@ body,
 
 #loading-spinner {
   margin-left: 10px;
+}
+
+#range-holder {
+  margin-left: 10px;
+  margin-right: 10px;
+  /* max-width: 40%; */
 }

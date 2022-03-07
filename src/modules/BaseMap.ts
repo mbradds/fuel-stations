@@ -24,6 +24,8 @@ export class BaseMap extends L.Map {
   selectToCityId: string;
   findRouteId: string;
   loadingId: string;
+  rangeId: string;
+  vehicleRange: number;
   markerFeature: undefined | L.FeatureGroup;
   config: Config;
 
@@ -36,6 +38,8 @@ export class BaseMap extends L.Map {
     selectToCityId = "select-to-city",
     findRouteId = "find-route",
     loadingId = "loading-spinner",
+    rangeId = "select-range",
+    vehicleRange = 300,
     markerFeature = undefined
   ) {
     super(div, config);
@@ -47,6 +51,8 @@ export class BaseMap extends L.Map {
     this.selectToCityId = selectToCityId;
     this.findRouteId = findRouteId;
     this.loadingId = loadingId;
+    this.rangeId = rangeId;
+    this.vehicleRange = vehicleRange;
     this.markerFeature = markerFeature;
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       attribution:
@@ -82,15 +88,14 @@ export class BaseMap extends L.Map {
     const optionFormDiv = document.getElementById(this.optionFormId);
     const btnHtml = (id: string, text: string) =>
       `<button id="${id}" type="button" class="btn btn-secondary">${text}</button>`;
-    const citySelectSpinners = (
-      id: string
-    ) => `<div id="${id}"> <div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div></div>
-  `;
+
+    const rangeHtml = `<div id="range-holder"><label for="${this.rangeId}" class="form-label">Vehicle Range</label>
+    <input type="range" class="form-range" id="${this.rangeId}"></div>`;
 
     if (optionFormDiv) {
       optionFormDiv.innerHTML = `${this.getSpinnerHtml(
         this.selectFromCityId
-      )} ${this.getSpinnerHtml(this.selectToCityId)} ${btnHtml(
+      )} ${this.getSpinnerHtml(this.selectToCityId)} ${rangeHtml} ${btnHtml(
         this.findRouteId,
         "Find Route"
       )}<div id="${this.loadingId}" ></div>`;
@@ -137,6 +142,10 @@ export class BaseMap extends L.Map {
     });
   }
 
+  static validateInputCity(city: string) {
+    return city.replaceAll(" ", "_");
+  }
+
   findRouteListener() {
     const findRouteElement = document.getElementById(this.findRouteId);
     const spinnerElement = document.getElementById(this.loadingId);
@@ -144,19 +153,21 @@ export class BaseMap extends L.Map {
       <any>document.getElementById("fromDatalist"),
       <any>document.getElementById("toDatalist"),
     ];
+    const currentVehicleRange = this.vehicleRange;
     if (findRouteElement && fromSelect && toSelect) {
       findRouteElement.addEventListener("click", async () => {
         this.clearMarkers();
         if (spinnerElement) {
           spinnerElement.innerHTML = this.getSpinnerHtml("");
         }
-        const fromCity = fromSelect.value;
-        const toCity = toSelect.value;
+        const fromCity = BaseMap.validateInputCity(fromSelect.value);
+        const toCity = BaseMap.validateInputCity(toSelect.value);
+        console.log(fromCity, toCity);
         const data = await routeData(
           "ELEC",
           fromCity,
           toCity,
-          500,
+          currentVehicleRange,
           "CA",
           "no",
           "GET"

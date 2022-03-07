@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
     "outDir": "./dist/",
+    "lib": ["ES2021", "DOM"],
     "noImplicitAny": true,
     "module": "ESNext",
     "target": "es5",

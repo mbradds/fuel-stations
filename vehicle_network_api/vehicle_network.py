@@ -26,7 +26,7 @@ class VehicleNetwork(Data):
 
         def get_random_location(loc, df):
             df = df[df["city"] == loc].copy()
-            unique = [str(c).capitalize() + "_" + str(p) for c, p in zip(df["city"], df["zip"])]
+            unique = [str(c).title() + "_" + str(p) for c, p in zip(df["city"], df["zip"])]
             unique = list(set(unique))
 
             # raise a warning if the size of locations == 0. This means there isnt a station in that city
@@ -43,24 +43,24 @@ class VehicleNetwork(Data):
             l = loc.split(",")
             if len(l) < 2:
                 l.append(None)
-
+            
+            input_city = l[0].replace("_", " ")
+            input_state = l[1]
             c = df.copy()
             c["city"] = [str(x).lower() for x in c["city"]]
             c["state"] = [str(x).lower() for x in c["state"]]
 
             try:
-
                 if l[1] == None:
-                    location = c[c["city"] == l[0]]
+                    location = c[c["city"] == input_city]
                 else:
-                    location = c[(c["city"] == l[0]) & (c["state"] == l[1])]
+                    location = c[(c["city"] == input_city) & (c["state"] == input_state)]
             except:
                 # raise an error. No stations could be found
                 location = None
 
             # get a random station ("node")
-
-            node = get_random_location(l[0], location)
+            node = get_random_location(input_city, location)
 
             station_count = {}
             max_stations = 0
@@ -71,7 +71,7 @@ class VehicleNetwork(Data):
 
                 station_count[number_of_stations] = r
 
-            return (station_count[max_stations], node)
+            return station_count[max_stations], node
 
 
         if self.region != None:
@@ -87,7 +87,9 @@ class VehicleNetwork(Data):
 
         if r != "NA":
             df = df[df["country"] == r].copy()
-
+        
+        start_node = start_node.replace(" ", "_")
+        end_node = end_node.replace(" ", "_")
         return start_node, end_node
 
 
@@ -159,11 +161,10 @@ class VehicleNetwork(Data):
             path_data["total_distance"] = cumulative_distance
             path_data["detailed_path"] = path_data_detail
             path_data["route_found"] = True
-        except:
+        except nx.NetworkXNoPath:
             path_data["route_found"] = False
             path_data["detailed_path"] = None
             path_data["total_distance"] = None
-            raise
             # TODO: raise a warning that the route didnt work, and then inform the user that a new path is being calculated with a higher range!
 
         path_data = json.dumps(path_data)
@@ -173,10 +174,12 @@ class VehicleNetwork(Data):
 if __name__ == "__main__":
 
     # Data.create_pickes(max_range=500, min_range=50)
-    # path = VehicleNetwork(vehicle_fuel='ELEC', start='Calgary,ab', end='London,on', vehicle_range=500, region="CA")
-    # route = path.shortest_path()
+    path = VehicleNetwork(vehicle_fuel='ELEC', vehicle_range=100, region="CA")
+    # g = path.G
+    # print(g.nodes)
+    route = path.shortest_path(start='Vancouver,BC', end='Algonquin_Highlands,ON')
     
-    path = VehicleNetwork(vehicle_fuel="ELEC" , region="CA")
-    cities = path.available_cities()
+    # path = VehicleNetwork(vehicle_fuel="ELEC" , region="CA")
+    # cities = path.available_cities()
 
 
