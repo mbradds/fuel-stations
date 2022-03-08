@@ -2,6 +2,7 @@ import networkx as nx
 import random
 import warnings
 import json
+import copy
 from graph_data import Data
 
 
@@ -13,10 +14,9 @@ class VehicleNetwork(Data):
     when needed
     '''
 
-    def __init__(self, vehicle_fuel, region, vehicle_range=500):
+    def __init__(self, vehicle_fuel, region):
         Data.__init__(self, vehicle_fuel=vehicle_fuel, region=region)
         self.vehicle_fuel = vehicle_fuel #user must select one fuel type.
-        self.vehicle_range = vehicle_range #user sets the range for their vehicle
         self.G = self.create_graph() #read in the graph
         print('Region: '+self.region)
 
@@ -100,22 +100,24 @@ class VehicleNetwork(Data):
         return json.dumps(options)
 
 
-    def vehicle_route(self):
+    def vehicle_route(self, vehicle_range):
         remove_list = []
         for paths in self.G.edges(data=True):
             n1 = paths[0]
             n2 = paths[1]
             distance = paths[2]["weight"]
-
-            if distance > self.vehicle_range:
+            
+            if distance > vehicle_range:
                 remove_list.append(tuple((n1, n2)))
+        
+        trimmed_graph = copy.deepcopy(self.G)
+        trimmed_graph.remove_edges_from(remove_list)
+        return trimmed_graph
 
-        self.G.remove_edges_from(remove_list)
 
-
-    def shortest_path(self, start, end):
+    def shortest_path(self, start, end, vehicle_range):
         source, target = self.find_region(start, end)
-        self.vehicle_route()
+        trimmed_graph = self.vehicle_route(vehicle_range)
 
         # TODO: make sure that self.G has been properly filtered!
         path_data = {}
@@ -123,10 +125,10 @@ class VehicleNetwork(Data):
         path_data["region"] = self.region
         path_data["start"] = start
         path_data["end"] = end
-        path_data["vehicle_range"] = self.vehicle_range
+        path_data["vehicle_range"] = vehicle_range
 
         try:
-            path = nx.shortest_path(self.G, source=source, target=target)
+            path = nx.shortest_path(trimmed_graph, source=source, target=target)
             # path_data["route"] = path
             # path_data["number_of_stops"] = len(path)
             # the path variable is a list of nodes. Now access node attributes to get lat/long,etc
@@ -136,12 +138,12 @@ class VehicleNetwork(Data):
                 if stop_number == 0:
                     None
                 elif stop_number < len(path):
-                    weight = self.G[path[stop_number - 1]][path[stop_number]]["weight"]
+                    weight = trimmed_graph[path[stop_number - 1]][path[stop_number]]["weight"]
                     cumulative_distance = cumulative_distance + weight
                 else:
                     None
 
-                attributes = self.G.nodes[stop]
+                attributes = trimmed_graph.nodes[stop]
                 path_data_detail.append(
                     {
                         "node": stop,
@@ -174,10 +176,10 @@ class VehicleNetwork(Data):
 if __name__ == "__main__":
 
     # Data.create_pickes(max_range=500, min_range=50)
-    path = VehicleNetwork(vehicle_fuel='ELEC', vehicle_range=100, region="CA")
+    path = VehicleNetwork(vehicle_fuel='ELEC', region="CA")
     # g = path.G
     # print(g.nodes)
-    route = path.shortest_path(start='Vancouver,BC', end='Algonquin_Highlands,ON')
+    route = path.shortest_path(start='Vancouver,BC', end='Calgary,AB', vehicle_range=300)
     
     # path = VehicleNetwork(vehicle_fuel="ELEC" , region="CA")
     # cities = path.available_cities()

@@ -17,6 +17,8 @@ interface Config {
   zoomControl: boolean;
 }
 
+const initialVehicleRange = 300;
+
 export class BaseMap extends L.Map {
   resetBtnId: string;
   optionFormId: string;
@@ -25,6 +27,7 @@ export class BaseMap extends L.Map {
   findRouteId: string;
   loadingId: string;
   rangeId: string;
+  routeNotFoundId: string;
   vehicleRange: number;
   markerFeature: undefined | L.FeatureGroup;
   config: Config;
@@ -39,7 +42,8 @@ export class BaseMap extends L.Map {
     findRouteId = "find-route",
     loadingId = "loading-spinner",
     rangeId = "select-range",
-    vehicleRange = 300,
+    routeNotFoundId = "route-not-found",
+    vehicleRange = initialVehicleRange,
     markerFeature = undefined
   ) {
     super(div, config);
@@ -52,6 +56,7 @@ export class BaseMap extends L.Map {
     this.findRouteId = findRouteId;
     this.loadingId = loadingId;
     this.rangeId = rangeId;
+    this.routeNotFoundId = routeNotFoundId;
     this.vehicleRange = vehicleRange;
     this.markerFeature = markerFeature;
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -62,10 +67,14 @@ export class BaseMap extends L.Map {
 
   resetListener() {
     const resetMapElement = document.getElementById(this.resetBtnId);
+    const routeNotFoundElement = document.getElementById(this.routeNotFoundId);
     if (resetMapElement) {
       resetMapElement.addEventListener("click", () => {
         this.clearMarkers();
         this.setView(this.config.initZoomTo, this.config.initZoomLevel);
+        if (routeNotFoundElement) {
+          routeNotFoundElement.innerHTML = "";
+        }
       });
     }
   }
@@ -84,13 +93,34 @@ export class BaseMap extends L.Map {
   `;
   }
 
+  setRangeLabel() {
+    const rangeTitleElement = document.getElementById("vehicle-range-title");
+    if (rangeTitleElement) {
+      rangeTitleElement.innerHTML = `Vehicle Range (${this.vehicleRange} km)`;
+    }
+  }
+
+  rangeSliderListener() {
+    const sliderElement = <HTMLInputElement>(
+      document.getElementById(this.rangeId)
+    );
+    const currentMap = this;
+    sliderElement.addEventListener("change", () => {
+      const displayValue = parseInt(sliderElement.value);
+      currentMap.vehicleRange = displayValue;
+      currentMap.setRangeLabel();
+    });
+  }
+
   addOptionFormHtml() {
     const optionFormDiv = document.getElementById(this.optionFormId);
     const btnHtml = (id: string, text: string) =>
       `<button id="${id}" type="button" class="btn btn-secondary">${text}</button>`;
 
-    const rangeHtml = `<div id="range-holder"><label for="${this.rangeId}" class="form-label">Vehicle Range</label>
-    <input type="range" class="form-range" id="${this.rangeId}"></div>`;
+    const rangeHtml = `<div id="range-holder"><label for="${this.rangeId}" class="form-label"><span id="vehicle-range-title">Vehicle Range (${this.vehicleRange} km)</span></label>
+    <input type="range" class="form-range" min="50" max="500" value="${initialVehicleRange}" id="${this.rangeId}"></div>`;
+
+    const routeNotFoundHtml = `<div id="${this.routeNotFoundId}"> </div>`;
 
     if (optionFormDiv) {
       optionFormDiv.innerHTML = `${this.getSpinnerHtml(
@@ -98,7 +128,7 @@ export class BaseMap extends L.Map {
       )} ${this.getSpinnerHtml(this.selectToCityId)} ${rangeHtml} ${btnHtml(
         this.findRouteId,
         "Find Route"
-      )}<div id="${this.loadingId}" ></div>`;
+      )}<div id="${this.loadingId}" ></div>${routeNotFoundHtml}`;
     }
 
     const resetControl = new L.Control({ position: "bottomleft" });
@@ -110,6 +140,7 @@ export class BaseMap extends L.Map {
     };
     resetControl.addTo(this);
     this.resetListener();
+    this.rangeSliderListener();
   }
 
   getSelectElements() {
@@ -153,7 +184,6 @@ export class BaseMap extends L.Map {
       <any>document.getElementById("fromDatalist"),
       <any>document.getElementById("toDatalist"),
     ];
-    const currentVehicleRange = this.vehicleRange;
     if (findRouteElement && fromSelect && toSelect) {
       findRouteElement.addEventListener("click", async () => {
         this.clearMarkers();
@@ -162,16 +192,16 @@ export class BaseMap extends L.Map {
         }
         const fromCity = BaseMap.validateInputCity(fromSelect.value);
         const toCity = BaseMap.validateInputCity(toSelect.value);
-        console.log(fromCity, toCity);
         const data = await routeData(
           "ELEC",
           fromCity,
           toCity,
-          currentVehicleRange,
+          this.vehicleRange,
           "CA",
           "no",
           "GET"
         );
+        console.log(data);
         this.addRoute(data);
         if (spinnerElement) {
           spinnerElement.innerHTML = "";
@@ -182,22 +212,37 @@ export class BaseMap extends L.Map {
 
   addRoute(routeData: RouteApiResponse) {
     // console.log(routeData);
-    const markers = routeData.detailed_path.map((stop) => {
-      return L.marker([stop.lat, stop.lng], {
-        icon: L.icon({
-          iconUrl: "./images/marker-icon.png",
-          iconAnchor: [10, 40],
-        }),
-      })
-        .bindPopup(`${stop.node}`)
-        .addTo(this);
-    });
-    const markerFeature = new L.FeatureGroup(markers);
-    this.flyToBounds(markerFeature.getBounds(), {
-      duration: 0.25,
-      easeLinearity: 1,
-      padding: [25, 25],
-    });
-    this.markerFeature = markerFeature;
+    const routeNotFoundElement = document.getElementById(this.routeNotFoundId);
+    if (routeNotFoundElement) {
+      routeNotFoundElement.innerHTML = "";
+    }
+    if (routeData.route_found) {
+      const markers = routeData.detailed_path.map((stop) => {
+        return L.marker([stop.lat, stop.lng], {
+          icon: L.icon({
+            iconUrl: "./images/marker-icon.png",
+            iconAnchor: [10, 40],
+          }),
+        })
+          .bindPopup(`${stop.node}`)
+          .addTo(this);
+      });
+      const markerFeature = new L.FeatureGroup(markers);
+      this.flyToBounds(markerFeature.getBounds(), {
+        duration: 0.25,
+        easeLinearity: 1,
+        padding: [25, 25],
+      });
+      this.markerFeature = markerFeature;
+    } else {
+      this.markerFeature = undefined;
+      if (routeNotFoundElement) {
+        routeNotFoundElement.innerHTML = `<div class="alert alert-danger d-flex align-items-center" role="alert">
+        <div>
+          Cant find a route. Try increasing the vehicle range.
+        </div>
+      </div>`;
+      }
+    }
   }
 }

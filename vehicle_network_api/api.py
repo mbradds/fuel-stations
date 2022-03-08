@@ -14,7 +14,6 @@ class VehicleRouteService(Resource):
     def __init__(self, f_type="ELEC", region="CA"):
         self.f_type = "ELEC"
         self.region = "CA"
-        self.vehicle_range = 500
         self.path = initpath
 
 
@@ -22,7 +21,7 @@ class VehicleRouteService(Resource):
         if return_cities == "yes":
             return self.path.available_cities()
         else:
-            return self.path.shortest_path(start_city, end_city)
+            return self.path.shortest_path(start_city, end_city, int(vehicle_range))
 
 
     def put(self, f_type, start_city, end_city, vehicle_range, region, return_cities):
