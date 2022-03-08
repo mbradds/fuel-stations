@@ -11,19 +11,16 @@ initpath = VehicleNetwork(vehicle_fuel="ELEC", region="CA", vehicle_range=300)
 
 class VehicleRouteService(Resource):
 
-    def __init__(self, f_type="ELEC", region="CA", vehicle_range=300):
-        self.f_type = "ELEC"
-        self.region = "CA"
-        self.vehicle_range = 300
-
-    def get(self, f_type, start_city, end_city, vehicle_range, region, return_cities):
+    def get(self, f_type, start_city, end_city, vehicle_range, region, return_cities, return_range):
         if return_cities == "yes":
             return initpath.available_cities()
+        elif return_range == "yes":
+            return initpath.vehicle_range
         else:
             return initpath.shortest_path(start_city, end_city)
 
 
-    def put(self, f_type, start_city, end_city, vehicle_range, region, return_cities):
+    def put(self, f_type, start_city, end_city, vehicle_range, region, return_cities, return_range):
         newpath = VehicleNetwork(
             vehicle_fuel=f_type,
             region=region,
@@ -31,11 +28,10 @@ class VehicleRouteService(Resource):
         )
         global initpath
         initpath = newpath
-        # return initpath
 
 
 api.add_resource(
-    VehicleRouteService, "/api/<f_type>/<start_city>/<end_city>/<vehicle_range>/<region>/<return_cities>"
+    VehicleRouteService, "/api/<f_type>/<start_city>/<end_city>/<vehicle_range>/<region>/<return_cities>/<return_range>"
 )
 
 if __name__ == "__main__":

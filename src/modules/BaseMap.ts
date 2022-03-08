@@ -125,6 +125,7 @@ export class BaseMap extends L.Map {
       this.vehicleRange,
       "CA",
       "no",
+      "no",
       "PUT"
     );
     if (findRouteElement) {
@@ -132,12 +133,23 @@ export class BaseMap extends L.Map {
     }
   }
 
-  addOptionFormHtml() {
+  async addOptionFormHtml() {
     const optionFormDiv = document.getElementById(this.optionFormId);
     const btnHtml = (id: string, text: string) =>
       `<button id="${id}" type="button" class="btn btn-secondary">${text}</button>`;
 
-    const rangeHtml = `<div id="range-holder"><label for="${this.rangeId}" class="form-label"><span id="vehicle-range-title">Vehicle Range (${this.vehicleRange} km)</span></label>
+    const serverVehcileRange = await routeData(
+      "ELEC",
+      "None",
+      "None",
+      this.vehicleRange,
+      "CA",
+      "no",
+      "yes",
+      "GET"
+    );
+
+    const rangeHtml = `<div id="range-holder"><label for="${this.rangeId}" class="form-label"><span id="vehicle-range-title">Vehicle Range (${serverVehcileRange} km)</span></label>
     <input type="range" class="form-range" min="50" max="500" value="${initialVehicleRange}" id="${this.rangeId}"></div>`;
 
     const routeNotFoundHtml = `<div id="${this.routeNotFoundId}"> </div>`;
@@ -197,9 +209,22 @@ export class BaseMap extends L.Map {
     return city.replaceAll(" ", "_");
   }
 
+  addLoader() {
+    const spinnerElement = document.getElementById(this.loadingId);
+    if (spinnerElement) {
+      spinnerElement.innerHTML = this.getSpinnerHtml("");
+    }
+  }
+
+  removeLoader() {
+    const spinnerElement = document.getElementById(this.loadingId);
+    if (spinnerElement) {
+      spinnerElement.innerHTML = "";
+    }
+  }
+
   findRouteListener() {
     const findRouteElement = document.getElementById(this.findRouteId);
-    const spinnerElement = document.getElementById(this.loadingId);
     const [fromSelect, toSelect] = [
       <any>document.getElementById("fromDatalist"),
       <any>document.getElementById("toDatalist"),
@@ -207,9 +232,7 @@ export class BaseMap extends L.Map {
     if (findRouteElement && fromSelect && toSelect) {
       findRouteElement.addEventListener("click", async () => {
         this.clearMarkers();
-        if (spinnerElement) {
-          spinnerElement.innerHTML = this.getSpinnerHtml("");
-        }
+        this.addLoader();
         const fromCity = BaseMap.validateInputCity(fromSelect.value);
         const toCity = BaseMap.validateInputCity(toSelect.value);
         const data = await routeData(
@@ -219,23 +242,38 @@ export class BaseMap extends L.Map {
           this.vehicleRange,
           "CA",
           "no",
+          "no",
           "GET"
         );
-        console.log(data);
+        this.vehicleRange = data.vehicle_range;
+        this.setRangeLabel();
         this.addRoute(data);
-        if (spinnerElement) {
-          spinnerElement.innerHTML = "";
-        }
+        this.removeLoader();
       });
     }
   }
 
-  addRoute(routeData: RouteApiResponse) {
-    // console.log(routeData);
+  setUserMessage(alertType: string, message: string) {
+    const routeNotFoundElement = document.getElementById(this.routeNotFoundId);
+    if (routeNotFoundElement) {
+      routeNotFoundElement.innerHTML = `<div class="alert ${alertType} d-flex align-items-center" role="alert">
+      <div>
+        ${message}
+      </div>
+    </div>`;
+    }
+  }
+
+  clearUserMessage() {
     const routeNotFoundElement = document.getElementById(this.routeNotFoundId);
     if (routeNotFoundElement) {
       routeNotFoundElement.innerHTML = "";
     }
+  }
+
+  addRoute(routeData: RouteApiResponse) {
+    this.clearUserMessage();
+    console.log(routeData);
     if (routeData.route_found) {
       const markers = routeData.detailed_path.map((stop) => {
         return L.marker([stop.lat, stop.lng], {
@@ -256,13 +294,10 @@ export class BaseMap extends L.Map {
       this.markerFeature = markerFeature;
     } else {
       this.markerFeature = undefined;
-      if (routeNotFoundElement) {
-        routeNotFoundElement.innerHTML = `<div class="alert alert-danger d-flex align-items-center" role="alert">
-        <div>
-          Cant find a route. Try increasing the vehicle range.
-        </div>
-      </div>`;
-      }
+      this.setUserMessage(
+        "alert-warning",
+        "Cant find a route. Try increasing the vehicle range."
+      );
     }
   }
 }

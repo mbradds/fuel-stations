@@ -26,6 +26,7 @@ async function main() {
     500,
     "CA",
     "yes",
+    "no",
     "GET"
   );
   map.populateCityDropDowns(cityOptions);

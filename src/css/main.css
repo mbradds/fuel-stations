@@ -49,3 +49,7 @@ body,
   margin-right: 10px;
   /* max-width: 40%; */
 }
+
+.alert {
+  margin-bottom: 0px;
+}
