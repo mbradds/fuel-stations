@@ -61,7 +61,7 @@ class Data:
     @staticmethod
     def create_pickes(max_range, min_range):
         fuel_options = ["ELEC", "LPG"] # , "CNG"]  # TODO: add fuel_options to self
-        # Data.country_options.append("NA")
+        Data.country_options.append("NA")
         for fuel in fuel_options:
             for country in Data.country_options:
                 network = Data(vehicle_fuel=fuel, region=country)

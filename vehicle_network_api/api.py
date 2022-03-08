@@ -6,29 +6,32 @@ from vehicle_network import VehicleNetwork
 app = Flask(__name__)
 CORS(app, resources={r'/*': {'origins': '*'}})
 api = Api(app)
-initpath = VehicleNetwork(vehicle_fuel="ELEC", region="CA")
+initpath = VehicleNetwork(vehicle_fuel="ELEC", region="CA", vehicle_range=300)
 
 
 class VehicleRouteService(Resource):
 
-    def __init__(self, f_type="ELEC", region="CA"):
+    def __init__(self, f_type="ELEC", region="CA", vehicle_range=300):
         self.f_type = "ELEC"
         self.region = "CA"
-        self.path = initpath
-
+        self.vehicle_range = 300
 
     def get(self, f_type, start_city, end_city, vehicle_range, region, return_cities):
         if return_cities == "yes":
-            return self.path.available_cities()
+            return initpath.available_cities()
         else:
-            return self.path.shortest_path(start_city, end_city, int(vehicle_range))
+            return initpath.shortest_path(start_city, end_city)
 
 
     def put(self, f_type, start_city, end_city, vehicle_range, region, return_cities):
-        self.path = VehicleNetwork(
+        newpath = VehicleNetwork(
             vehicle_fuel=f_type,
-            region=region
+            region=region,
+            vehicle_range=int(vehicle_range)
         )
+        global initpath
+        initpath = newpath
+        # return initpath
 
 
 api.add_resource(

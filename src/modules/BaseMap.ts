@@ -108,8 +108,28 @@ export class BaseMap extends L.Map {
     sliderElement.addEventListener("change", () => {
       const displayValue = parseInt(sliderElement.value);
       currentMap.vehicleRange = displayValue;
+      currentMap.updateServerGraph();
       currentMap.setRangeLabel();
     });
+  }
+
+  async updateServerGraph() {
+    const findRouteElement = <any>document.getElementById(this.findRouteId);
+    if (findRouteElement) {
+      findRouteElement.disabled = true;
+    }
+    await routeData(
+      "ELEC",
+      "None",
+      "None",
+      this.vehicleRange,
+      "CA",
+      "no",
+      "PUT"
+    );
+    if (findRouteElement) {
+      findRouteElement.disabled = false;
+    }
   }
 
   addOptionFormHtml() {
