@@ -185,7 +185,7 @@ class VehicleNetwork(Data):
 
 if __name__ == "__main__":
     start = time.time()
-    path = VehicleNetwork(vehicle_fuel='ELEC', region="NA", vehicle_range=300)
+    path = VehicleNetwork(vehicle_fuel='ELEC', region="CA", vehicle_range=300)
     # g = path.G
     # print(g.nodes)
     route = path.shortest_path(start='Vancouver,BC', end='Calgary,AB')

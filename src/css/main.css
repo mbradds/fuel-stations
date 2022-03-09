@@ -42,12 +42,12 @@ body,
 
 #loading-spinner {
   margin-left: 10px;
+  margin-right: 10px;
 }
 
 #range-holder {
   margin-left: 10px;
   margin-right: 10px;
-  /* max-width: 40%; */
 }
 
 .alert {

@@ -1,5 +1,5 @@
 import * as L from "leaflet";
-import { routeData } from "./routeData";
+import { routeData, getCityOptions, getVehicleRange } from "./routeData";
 import { RouteApiResponse } from "./interfaces";
 
 L.Icon.Default.imagePath = "./dist/images";
@@ -16,8 +16,6 @@ interface Config {
   initZoomLevel: number;
   zoomControl: boolean;
 }
-
-const initialVehicleRange = 300;
 
 export class BaseMap extends L.Map {
   resetBtnId: string;
@@ -43,7 +41,7 @@ export class BaseMap extends L.Map {
     loadingId = "loading-spinner",
     rangeId = "select-range",
     routeNotFoundId = "route-not-found",
-    vehicleRange = initialVehicleRange,
+    vehicleRange = 300,
     markerFeature = undefined
   ) {
     super(div, config);
@@ -104,33 +102,28 @@ export class BaseMap extends L.Map {
     const sliderElement = <HTMLInputElement>(
       document.getElementById(this.rangeId)
     );
-    const currentMap = this;
     sliderElement.addEventListener("change", () => {
       const displayValue = parseInt(sliderElement.value);
-      currentMap.vehicleRange = displayValue;
-      currentMap.updateServerGraph();
-      currentMap.setRangeLabel();
+      this.vehicleRange = displayValue;
+      this.updateServerGraph();
+      this.setRangeLabel();
     });
   }
 
   async updateServerGraph() {
+    this.clearUserMessage();
+    this.addLoader();
+    this.setUserMessage("alert-primary", "Updating vehicle network");
     const findRouteElement = <any>document.getElementById(this.findRouteId);
     if (findRouteElement) {
       findRouteElement.disabled = true;
     }
-    await routeData(
-      "ELEC",
-      "None",
-      "None",
-      this.vehicleRange,
-      "CA",
-      "no",
-      "no",
-      "PUT"
-    );
+    await routeData("ELEC", "None", "None", this.vehicleRange, "CA", "PUT");
     if (findRouteElement) {
       findRouteElement.disabled = false;
     }
+    this.removeLoader();
+    this.clearUserMessage();
   }
 
   async addOptionFormHtml() {
@@ -138,19 +131,10 @@ export class BaseMap extends L.Map {
     const btnHtml = (id: string, text: string) =>
       `<button id="${id}" type="button" class="btn btn-secondary">${text}</button>`;
 
-    const serverVehcileRange = await routeData(
-      "ELEC",
-      "None",
-      "None",
-      this.vehicleRange,
-      "CA",
-      "no",
-      "yes",
-      "GET"
-    );
-
-    const rangeHtml = `<div id="range-holder"><label for="${this.rangeId}" class="form-label"><span id="vehicle-range-title">Vehicle Range (${serverVehcileRange} km)</span></label>
-    <input type="range" class="form-range" min="50" max="500" value="${initialVehicleRange}" id="${this.rangeId}"></div>`;
+    const serverVehicleRange = await getVehicleRange();
+    this.vehicleRange = parseInt(serverVehicleRange);
+    const rangeHtml = `<div id="range-holder"><label for="${this.rangeId}" class="form-label"><span id="vehicle-range-title">Vehicle Range (${serverVehicleRange} km)</span></label>
+    <input type="range" class="form-range" min="50" max="500" value="${this.vehicleRange}" id="${this.rangeId}"></div>`;
 
     const routeNotFoundHtml = `<div id="${this.routeNotFoundId}"> </div>`;
 
@@ -175,12 +159,6 @@ export class BaseMap extends L.Map {
     this.rangeSliderListener();
   }
 
-  getSelectElements() {
-    const fromSelect = <any>document.getElementById(this.selectFromCityId);
-    const toSelect = <any>document.getElementById(this.selectToCityId);
-    return [fromSelect, toSelect];
-  }
-
   populateCityDropDowns(promiseList: Promise<string[]>) {
     let optionHtml = "";
     promiseList.then((cities: string[]) => {
@@ -196,7 +174,8 @@ export class BaseMap extends L.Map {
       ${optionHtml}
       </datalist>`;
 
-      const [fromSelect, toSelect] = this.getSelectElements();
+      const fromSelect = <any>document.getElementById(this.selectFromCityId);
+      const toSelect = <any>document.getElementById(this.selectToCityId);
       if (fromSelect && toSelect) {
         fromSelect.innerHTML = fromHtml;
         toSelect.innerHTML = toHtml;
@@ -232,22 +211,30 @@ export class BaseMap extends L.Map {
     if (findRouteElement && fromSelect && toSelect) {
       findRouteElement.addEventListener("click", async () => {
         this.clearMarkers();
+        this.clearUserMessage();
         this.addLoader();
         const fromCity = BaseMap.validateInputCity(fromSelect.value);
         const toCity = BaseMap.validateInputCity(toSelect.value);
-        const data = await routeData(
-          "ELEC",
-          fromCity,
-          toCity,
-          this.vehicleRange,
-          "CA",
-          "no",
-          "no",
-          "GET"
-        );
-        this.vehicleRange = data.vehicle_range;
-        this.setRangeLabel();
-        this.addRoute(data);
+        if (fromCity !== "" && toCity !== "") {
+          const data = await routeData(
+            "ELEC",
+            fromCity,
+            toCity,
+            this.vehicleRange,
+            "CA",
+            "GET"
+          );
+          this.vehicleRange = data.vehicle_range;
+          this.setRangeLabel();
+          this.addRoute(data);
+          this.setUserMessage("alert-success", "Possible route found");
+        } else {
+          this.setUserMessage(
+            "alert-warning",
+            "Please select a start and end city"
+          );
+        }
+
         this.removeLoader();
       });
     }
@@ -272,7 +259,6 @@ export class BaseMap extends L.Map {
   }
 
   addRoute(routeData: RouteApiResponse) {
-    this.clearUserMessage();
     console.log(routeData);
     if (routeData.route_found) {
       const markers = routeData.detailed_path.map((stop) => {
@@ -295,7 +281,7 @@ export class BaseMap extends L.Map {
     } else {
       this.markerFeature = undefined;
       this.setUserMessage(
-        "alert-warning",
+        "alert-danger",
         "Cant find a route. Try increasing the vehicle range."
       );
     }
