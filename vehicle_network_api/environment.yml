@@ -4,8 +4,6 @@ channels:
 dependencies:
   - pandas
   - spyder
-  - jupyter
-  - folium
   - flask
   - flask-restful
   - flask-cors

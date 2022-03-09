@@ -11,6 +11,8 @@
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
+    "build-networks": "cd vehicle_network_api && conda run -n fuel-stations python create_pickles.py",
+    "start-api": "cd vehicle_network_api && conda run -n fuel-stations python api.py",
     "build": "webpack --config webpack.prod.js",
     "dev": "webpack serve --config webpack.dev.js",
     "prettier": "npx prettier --write .",

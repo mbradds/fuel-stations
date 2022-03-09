@@ -2,7 +2,6 @@ import networkx as nx
 import random
 import warnings
 import json
-import copy
 import time
 from graph_data import Data
 

@@ -6,8 +6,9 @@ import json
 import networkx as nx
 from math import radians, cos, sin, asin, sqrt
 from itertools import combinations
+from util import set_cwd_to_script
 headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'}
-
+set_cwd_to_script()
 
 class Data:
     # TODO: use setter on region depending on start and end values.
@@ -30,6 +31,8 @@ class Data:
         self.min_range = min_range
         self.region = region
         self.stations = self.get_stations()
+        if not os.path.exists(os.path.join(os.getcwd(), "nx_pickles")):
+            os.makedirs(os.path.join(os.getcwd(), "nx_pickles"))
 
 
     @staticmethod

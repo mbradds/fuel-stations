@@ -1,8 +1,10 @@
 from flask import Flask
 from flask_restful import Resource, Api
 from flask_cors import CORS
+from util import set_cwd_to_script
 from vehicle_network import VehicleNetwork
 
+set_cwd_to_script()
 app = Flask(__name__)
 CORS(app, resources={r'/*': {'origins': '*'}})
 api = Api(app)
