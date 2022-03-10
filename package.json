@@ -11,6 +11,7 @@
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node --loader ts-node/esm server.ts",
     "build-networks": "cd vehicle_network_api && conda run -n fuel-stations python create_pickles.py",
     "start-api": "cd vehicle_network_api && conda run -n fuel-stations python api.py",
     "build": "webpack --config webpack.prod.js",
@@ -31,9 +32,12 @@
   "dependencies": {
     "@types/leaflet": "^1.7.9",
     "bootstrap": "^5.1.3",
+    "compression": "^1.7.4",
+    "express": "^4.17.3",
     "leaflet": "^1.7.1"
   },
   "devDependencies": {
+    "@types/compression": "^1.7.2",
     "clean-webpack-plugin": "^4.0.0",
     "css-loader": "^6.7.1",
     "css-minimizer-webpack-plugin": "^3.4.1",

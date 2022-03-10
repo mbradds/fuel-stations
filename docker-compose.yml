@@ -1,0 +1,16 @@
+
+version: "3.9"
+
+services:
+  vehicle_network_api:
+    build:
+      dockerfile: Dockerfile
+      context: ./vehicle_network_api
+    ports:
+      - 5000
+  frontend:
+    build:
+      dockerfile: Dockerfile
+      context: ./
+    ports:
+      - 8080
