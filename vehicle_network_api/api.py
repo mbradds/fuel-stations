@@ -17,7 +17,6 @@ class VehicleRouteService(Resource):
         print("here!")
         return initpath.shortest_path(start_city, end_city)
 
-
     def put(self, f_type, start_city, end_city, vehicle_range, region):
         newpath = VehicleNetwork(
             vehicle_fuel=f_type,
