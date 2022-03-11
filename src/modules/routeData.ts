@@ -1,14 +1,23 @@
-export async function routeData(
+export async function getRoute(startCity: string, endCity: string) {
+  try {
+    const url = `http://10.0.0.128:5000/api/getRoute/${startCity}/${endCity}`;
+    const response = await fetch(url, { method: "GET" });
+    const data = await response.json();
+    const objData = JSON.parse(data);
+    return objData;
+  } catch (err) {
+    return err;
+  }
+}
+
+export async function updateNetwork(
   fuelType: string,
-  startCity: string,
-  endCity: string,
   vehicleRange: number,
-  region: string,
-  method: string
+  region: string
 ) {
   try {
-    const url = `http://10.0.0.128:5000/api/${fuelType}/${startCity}/${endCity}/${vehicleRange}/${region}`;
-    const response = await fetch(url, { method: method });
+    const url = `http://10.0.0.128:5000/api/updateNetwork/${fuelType}/${vehicleRange}/${region}`;
+    const response = await fetch(url, { method: "PUT" });
     const data = await response.json();
     const objData = JSON.parse(data);
     return objData;

@@ -1,5 +1,5 @@
 import * as L from "leaflet";
-import { routeData, getCityOptions, getVehicleRange } from "./routeData";
+import { getRoute, updateNetwork, getVehicleRange } from "./routeData";
 import { RouteApiResponse } from "./interfaces";
 
 L.Icon.Default.imagePath = "./dist/images";
@@ -123,7 +123,7 @@ export class BaseMap extends L.Map {
     if (findRouteElement) {
       findRouteElement.disabled = true;
     }
-    await routeData("ELEC", "None", "None", this.vehicleRange, "CA", "PUT");
+    await updateNetwork("ELEC", this.vehicleRange, "CA");
     if (findRouteElement) {
       findRouteElement.disabled = false;
     }
@@ -221,14 +221,7 @@ export class BaseMap extends L.Map {
         const fromCity = BaseMap.validateInputCity(fromSelect.value);
         const toCity = BaseMap.validateInputCity(toSelect.value);
         if (fromCity !== "" && toCity !== "") {
-          const data = await routeData(
-            "ELEC",
-            fromCity,
-            toCity,
-            this.vehicleRange,
-            "CA",
-            "GET"
-          );
+          const data = await getRoute(fromCity, toCity);
           this.vehicleRange = data.vehicle_range;
           this.setRangeLabel();
           this.addRoute(data);

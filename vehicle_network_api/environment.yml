@@ -8,4 +8,5 @@ dependencies:
   - flask-restful
   - flask-cors
   - networkx=2.5.1
+  - waitress
 prefix: /home/grant/anaconda3/envs/fuel-stations

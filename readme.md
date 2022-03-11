@@ -43,3 +43,24 @@ npm run start-api
 ```bash
 npm run dev
 ```
+
+## Reference
+
+Build containers
+
+```bash
+docker-compose build
+```
+
+Run containers
+
+```bash
+docker-compose up
+```
+
+Save conda environment
+
+```bash
+cd vehicle_network_api
+conda env export --from-history > environment.yml
+```

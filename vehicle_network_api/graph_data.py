@@ -67,7 +67,11 @@ class Data:
             for country in Data.country_options:
                 network = Data(vehicle_fuel=fuel, region=country,
                                max_range=max_range, min_range=min_range)
-                network.create_graph()
+                file_name = network.file_name()
+                if os.path.isfile(file_name):
+                    print(file_name+" already created")
+                else:
+                    network.create_graph()
 
     def file_name(self):
         return('nx_pickles/'+self.vehicle_fuel+'_'+self.region+'_'+'Max_'+str(self.max_range)+'_'+'Min_'+str(self.min_range)+'.pickle')
