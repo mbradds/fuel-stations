@@ -61,6 +61,11 @@ export class BaseMap extends L.Map {
       attribution:
         '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
     }).addTo(this);
+
+    // This fixes greyed out tiles when the page is refreshed
+    setTimeout(() => {
+      this.invalidateSize(false);
+    }, 0);
   }
 
   resetListener() {
@@ -227,14 +232,12 @@ export class BaseMap extends L.Map {
           this.vehicleRange = data.vehicle_range;
           this.setRangeLabel();
           this.addRoute(data);
-          this.setUserMessage("alert-success", "Possible route found");
         } else {
           this.setUserMessage(
             "alert-warning",
             "Please select a start and end city"
           );
         }
-
         this.removeLoader();
       });
     }
@@ -259,7 +262,6 @@ export class BaseMap extends L.Map {
   }
 
   addRoute(routeData: RouteApiResponse) {
-    console.log(routeData);
     if (routeData.route_found) {
       const markers = routeData.detailed_path.map((stop) => {
         return L.marker([stop.lat, stop.lng], {
@@ -278,6 +280,7 @@ export class BaseMap extends L.Map {
         padding: [25, 25],
       });
       this.markerFeature = markerFeature;
+      this.setUserMessage("alert-success", "Possible route found");
     } else {
       this.markerFeature = undefined;
       this.setUserMessage(

@@ -1,16 +1,15 @@
-
 version: "3.9"
 
 services:
+  frontend:
+    build: .
+    ports:
+       - "0.0.0.0:8080:8080"
+    depends_on:
+      - vehicle_network_api
   vehicle_network_api:
     build:
       dockerfile: Dockerfile
       context: ./vehicle_network_api
     ports:
-      - 5000
-  frontend:
-    build:
-      dockerfile: Dockerfile
-      context: ./
-    ports:
-      - 8080
+      - "0.0.0.0:5000:5000"
