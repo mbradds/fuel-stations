@@ -18,18 +18,17 @@ class Data:
     """
 
     country_options = ['CA', 'US']
+    fuel_options = ["ELEC", "LPG"]
+    max_range = 700
+    min_range = 100
 
     def __init__(self,
                  vehicle_fuel,
-                 max_range=500,
-                 min_range=50,
                  nrel_data='fuel_stations.csv',
                  region=None):
 
         self.vehicle_fuel = vehicle_fuel
         self.nrel_data = nrel_data
-        self.max_range = max_range
-        self.min_range = min_range
         self.region = region
         self.stations = self.get_stations()
         if not os.path.exists(os.path.join(os.getcwd(), "nx_pickles")):
@@ -60,21 +59,24 @@ class Data:
         return df
 
     @staticmethod
-    def create_pickes(max_range, min_range):
-        fuel_options = ["ELEC", "LPG"]
+    def create_pickes(max_range=None, min_range=None):
+        if max_range:
+            Data.max_range = max_range
+        if min_range:
+            Data.min_range = min_range
         Data.country_options.append("NA")
-        for fuel in fuel_options:
+        for fuel in Data.fuel_options:
             for country in Data.country_options:
-                network = Data(vehicle_fuel=fuel, region=country,
-                               max_range=max_range, min_range=min_range)
-                file_name = network.file_name()
-                if os.path.isfile(file_name):
-                    print(file_name+" already created")
+                test_file_name = Data.file_name(fuel, country)
+                if os.path.isfile(test_file_name):
+                    print(test_file_name+" network ready")
                 else:
+                    network = Data(vehicle_fuel=fuel, region=country)
                     network.create_graph()
-
-    def file_name(self):
-        return('nx_pickles/'+self.vehicle_fuel+'_'+self.region+'_'+'Max_'+str(self.max_range)+'_'+'Min_'+str(self.min_range)+'.pickle')
+    
+    @staticmethod
+    def file_name(vehicle_fuel, region):
+        return('nx_pickles/'+vehicle_fuel+'_'+region+'_'+'Max_'+str(Data.max_range)+'_'+'Min_'+str(Data.min_range)+'.pickle')
 
     def get_stations(self):
         if os.path.isfile(self.nrel_data):
@@ -137,14 +139,14 @@ class Data:
         '''
         # TODO: look at casting types for node attributes and edge weight. This may reduce pickle file size
 
-        file_name = self.file_name()
+        graph_file_name = Data.file_name(self.vehicle_fuel, self.region)
 
-        if os.path.isfile(file_name):
-            G = nx.read_gpickle(file_name)
-            print("read pickle object: " + file_name)
+        if os.path.isfile(graph_file_name):
+            G = nx.read_gpickle(graph_file_name)
+            print("read pickle object: " + graph_file_name)
         else:
             # ceates a complete graph if there isnt one already
-            print("creating pickle object: " + file_name)
+            print("creating pickle object: " + graph_file_name)
             print("DF length: " + str(len(self.stations)))
             G = nx.Graph()
             for index, row in self.stations.iterrows():
@@ -175,15 +177,15 @@ class Data:
                 distance = self.haversine(long1, lat1, long2, lat2)
                 # there is no range requirement
 
-                if distance > self.max_range or distance < self.min_range:
+                if distance > Data.max_range or distance < Data.min_range:
                     None  # the vehicle cant make it from node 1 to node 2
                 else:
                     G.add_edge(edge[0], edge[1], weight=distance)
 
             # pickle the graph once it is created
-            nx.write_gpickle(G, file_name)
-            print("created new pickle object: " + file_name +
-                  " with max range " + str(self.max_range))
+            nx.write_gpickle(G, graph_file_name)
+            print("created new pickle object: " + graph_file_name +
+                  " with max range " + str(Data.max_range))
         return G
 
 

@@ -3,10 +3,10 @@ channels:
   - defaults
 dependencies:
   - pandas
-  - spyder
   - flask
-  - flask-restful
   - flask-cors
   - networkx=2.5.1
   - waitress
+  - requests
+  - flask-restful
 prefix: /home/grant/anaconda3/envs/fuel-stations

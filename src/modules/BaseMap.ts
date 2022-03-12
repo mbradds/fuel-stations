@@ -139,7 +139,7 @@ export class BaseMap extends L.Map {
     const serverVehicleRange = await getVehicleRange();
     this.vehicleRange = parseInt(serverVehicleRange);
     const rangeHtml = `<div id="range-holder"><label for="${this.rangeId}" class="form-label"><span id="vehicle-range-title">Vehicle Range (${serverVehicleRange} km)</span></label>
-    <input type="range" class="form-range" min="50" max="500" value="${this.vehicleRange}" id="${this.rangeId}"></div>`;
+    <input type="range" class="form-range" min="100" max="700" value="${this.vehicleRange}" id="${this.rangeId}"></div>`;
 
     const routeNotFoundHtml = `<div id="${this.routeNotFoundId}"> </div>`;
 

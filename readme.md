@@ -64,3 +64,13 @@ Save conda environment
 cd vehicle_network_api
 conda env export --from-history > environment.yml
 ```
+
+Get docker image size
+
+```bash
+docker images | grep fuel-stations
+```
+
+Current sizes
+fuel-stations_frontend latest b3d2b2f1632a 24 seconds ago 2.26GB
+fuel-stations_vehicle_network_api latest 025936fb260a 47 seconds ago 3.06GB

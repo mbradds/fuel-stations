@@ -1,12 +1,10 @@
 **/.git
 **/.gitignore
-**/.vs
-**/.vscode
+node_modules
 **/docker-compose*
 **/compose*
 **/Dockerfile*
 **/node_modules
 **/npm-debug.log
 **/.md
-node_modules
 api_key.json
