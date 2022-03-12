@@ -1,16 +1,18 @@
-FROM continuumio/miniconda3
+FROM python:3.8-slim-buster
+
+ENV FLASK_APP=api.py
+ENV LISTEN_PORT=5000
+EXPOSE 5000
 
 WORKDIR /app
 
 # Create the environment:
-COPY environment.yml .
-RUN conda env create -f environment.yml
-
-# Make RUN commands use the new environment:
-SHELL ["conda", "run", "-n", "fuel-stations", "/bin/bash", "-c"]
+COPY requirements.txt requirements.txt
+RUN pip3 install -r requirements.txt
 
 # Copy all the python files
-COPY . /app
+COPY . .
+
 
 # The code to run when container is started:
-ENTRYPOINT ["conda", "run", "--no-capture-output", "-n", "fuel-stations", "python3", "api.py"]
+CMD [ "python3", "-m" , "flask", "run", "--host=0.0.0.0"]

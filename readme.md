@@ -14,10 +14,11 @@ Move to the api sub-folder
 cd vehicle_network_api
 ```
 
-create the conda fuel-stations environment
+create the fuel-stations environment (env)
 
 ```bash
-conda env create -f environment.yml && conda activate fuel-stations
+pip3 install -r requirements.txt
+cd ..
 ```
 
 3. Set up the front end dependencies
@@ -35,6 +36,9 @@ npm run build-networks
 5. Start the backend flask app
 
 ```bash
+cd vehicle_network_api
+source env/bin/activate
+cd ..
 npm run start-api
 ```
 
@@ -72,5 +76,29 @@ docker images | grep fuel-stations
 ```
 
 Current sizes
-fuel-stations_frontend latest b3d2b2f1632a 24 seconds ago 2.26GB
-fuel-stations_vehicle_network_api latest 025936fb260a 47 seconds ago 3.06GB
+fuel-stations_vehicle_network_api latest 7b9b040964ee 48 seconds ago 1.6GB
+fuel-stations_frontend latest f93bebffb052 7 minutes ago 2.4GB
+
+Python virtual environment (venv)
+
+```bash
+cd vehicle_network_api
+```
+
+create the environment
+
+```bash
+python3 -m venv env
+```
+
+Activate the environment
+
+```bash
+source env/bin/activate
+```
+
+Save environment
+
+```bash
+pip freeze > requirements.txt
+```
