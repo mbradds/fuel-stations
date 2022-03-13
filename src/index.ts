@@ -9,8 +9,7 @@ function setUpMap() {
   const map = new BaseMap("map", {
     zoomDelta: 0.5,
     zoomSnap: 0.5,
-    initZoomTo: L.latLng(49.9, -97.1),
-    initZoomLevel: 4.5,
+    initZoomLevel: 4,
     zoomControl: true,
   });
   map.addOptionFormHtml();

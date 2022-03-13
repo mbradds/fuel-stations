@@ -1,5 +1,11 @@
 import * as L from "leaflet";
-import { getRoute, updateNetwork, getVehicleRange } from "./routeData";
+import {
+  getRoute,
+  updateNetwork,
+  getVehicleRange,
+  getCityOptions,
+} from "./routeData";
+import { btnGroupClick } from "./util";
 import { RouteApiResponse } from "./interfaces";
 
 L.Icon.Default.imagePath = "./dist/images";
@@ -12,9 +18,18 @@ L.Icon.Default.mergeOptions({
 interface Config {
   zoomDelta: number;
   zoomSnap: number;
-  initZoomTo: L.LatLng;
   initZoomLevel: number;
   zoomControl: boolean;
+}
+
+interface InitZoomsKeys {
+  [key: string]: L.LatLng;
+}
+
+interface InitZooms extends InitZoomsKeys {
+  CA: L.LatLng;
+  US: L.LatLng;
+  NA: L.LatLng;
 }
 
 export class BaseMap extends L.Map {
@@ -27,7 +42,9 @@ export class BaseMap extends L.Map {
   rangeId: string;
   routeNotFoundId: string;
   vehicleRange: number;
+  region: string;
   markerFeature: undefined | L.FeatureGroup;
+  initZooms: InitZooms;
   config: Config;
 
   constructor(
@@ -42,11 +59,17 @@ export class BaseMap extends L.Map {
     rangeId = "select-range",
     routeNotFoundId = "route-not-found",
     vehicleRange = 300,
+    region = "CA",
+    initZooms: InitZooms = {
+      CA: L.latLng(56.7, -98),
+      US: L.latLng(38.6, -98.7),
+      NA: L.latLng(48.9, -96.6),
+    },
     markerFeature = undefined
   ) {
     super(div, config);
     this.config = config;
-    this.setView(config.initZoomTo, config.initZoomLevel);
+    this.setView(initZooms[region], config.initZoomLevel);
     this.resetBtnId = resetBtnId;
     this.optionFormId = optionFormId;
     this.selectFromCityId = selectFromCityId;
@@ -56,6 +79,8 @@ export class BaseMap extends L.Map {
     this.rangeId = rangeId;
     this.routeNotFoundId = routeNotFoundId;
     this.vehicleRange = vehicleRange;
+    this.region = region;
+    this.initZooms = initZooms;
     this.markerFeature = markerFeature;
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       attribution:
@@ -74,7 +99,7 @@ export class BaseMap extends L.Map {
     if (resetMapElement) {
       resetMapElement.addEventListener("click", () => {
         this.clearMarkers();
-        this.setView(this.config.initZoomTo, this.config.initZoomLevel);
+        this.setView(this.initZooms[this.region], this.config.initZoomLevel);
         if (routeNotFoundElement) {
           routeNotFoundElement.innerHTML = "";
         }
@@ -83,6 +108,7 @@ export class BaseMap extends L.Map {
   }
 
   clearMarkers() {
+    this.setView(this.initZooms[this.region], this.config.initZoomLevel);
     if (this.markerFeature) {
       this.markerFeature.eachLayer((marker) => {
         marker.remove();
@@ -116,6 +142,7 @@ export class BaseMap extends L.Map {
   }
 
   async updateServerGraph() {
+    this.clearMarkers();
     this.clearUserMessage();
     this.addLoader();
     this.setUserMessage("alert-primary", "Updating vehicle network");
@@ -123,7 +150,7 @@ export class BaseMap extends L.Map {
     if (findRouteElement) {
       findRouteElement.disabled = true;
     }
-    await updateNetwork("ELEC", this.vehicleRange, "CA");
+    await updateNetwork("ELEC", this.vehicleRange, this.region);
     if (findRouteElement) {
       findRouteElement.disabled = false;
     }
@@ -136,6 +163,12 @@ export class BaseMap extends L.Map {
     const btnHtml = (id: string, text: string) =>
       `<button id="${id}" type="button" class="btn btn-secondary">${text}</button>`;
 
+    const regionBtnGroupHtml = `<div class="btn-group" id="region-btn-group">
+    <button type="button" class="btn btn-secondary active" value="CA">CA</button>
+    <button type="button" class="btn btn-secondary" value="US">US</button>
+    <button type="button" class="btn btn-secondary" value="NA">NA</button>
+  </div>`;
+
     const serverVehicleRange = await getVehicleRange();
     this.vehicleRange = parseInt(serverVehicleRange);
     const rangeHtml = `<div id="range-holder"><label for="${this.rangeId}" class="form-label"><span id="vehicle-range-title">Vehicle Range (${serverVehicleRange} km)</span></label>
@@ -144,7 +177,7 @@ export class BaseMap extends L.Map {
     const routeNotFoundHtml = `<div id="${this.routeNotFoundId}"> </div>`;
 
     if (optionFormDiv) {
-      optionFormDiv.innerHTML = `${this.getSpinnerHtml(
+      optionFormDiv.innerHTML = `${regionBtnGroupHtml} ${this.getSpinnerHtml(
         this.selectFromCityId
       )} ${this.getSpinnerHtml(this.selectToCityId)} ${rangeHtml} ${btnHtml(
         this.findRouteId,
@@ -162,6 +195,7 @@ export class BaseMap extends L.Map {
     resetControl.addTo(this);
     this.resetListener();
     this.rangeSliderListener();
+    this.updateRegionListener();
   }
 
   populateCityDropDowns(promiseList: Promise<string[]>) {
@@ -232,6 +266,17 @@ export class BaseMap extends L.Map {
           );
         }
         this.removeLoader();
+      });
+    }
+  }
+
+  updateRegionListener() {
+    const regionBtnGroupElement = document.getElementById("region-btn-group");
+    if (regionBtnGroupElement) {
+      regionBtnGroupElement.addEventListener("click", async (event) => {
+        this.region = btnGroupClick("region-btn-group", event);
+        await this.updateServerGraph();
+        this.populateCityDropDowns(getCityOptions());
       });
     }
   }
