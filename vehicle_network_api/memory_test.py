@@ -1,14 +1,19 @@
 import requests
 import random
 
-call = "http://10.0.0.128:5000/api/getRoute/Calgary,ab/London,on"
+s = requests.Session()
+
+s.get("http://10.0.0.128:5000/api/setInitialRoute")
+
+call = "http://10.0.0.128:5000/api/getRoute/Calgary,AB/Halifax,NS"
+
 
 # Warm up, so you don't measure flask internal memory usage
 for _ in range(10):
-    requests.get(call)
+    s.get(call)
 
 # Memory usage before API calls
-resp = requests.get('http://10.0.0.128:5000/api/memory')
+resp = s.get('http://10.0.0.128:5000/api/memory')
 print(f'Memory before API call {int(resp.json().get("memory"))}')
 
 # Take first memory usage snapshot
@@ -17,12 +22,13 @@ print(f'Memory before API call {int(resp.json().get("memory"))}')
 # Start some API Calls
 for _ in range(10):
     random_range = random.randint(100, 700)
-    requests.put("http://10.0.0.128:5000/api/updateNetwork/ELEC/"+str(random_range)+"/CA")
-    requests.get(call)
+    s.put("http://10.0.0.128:5000/api/updateNetwork/ELEC/" +
+          str(random_range)+"/CA")
+    s.get(call)
     # print("done: "+call)
 
 # Memory usage after
-resp = requests.get('http://10.0.0.128:5000/api/memory')
+resp = s.get('http://10.0.0.128:5000/api/memory')
 print(f'Memory after API call: {int(resp.json().get("memory"))}')
 
 # Take 2nd snapshot and print result

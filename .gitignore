@@ -2,6 +2,7 @@ node_modules
 dist
 */env
 *.pyo
+*/flask_session/*
 *.pyc
 __pycache__
 api_key.json
