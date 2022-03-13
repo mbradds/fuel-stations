@@ -223,10 +223,6 @@ export class BaseMap extends L.Map {
     });
   }
 
-  static validateInputCity(city: string) {
-    return city.replaceAll(" ", "_");
-  }
-
   addLoader() {
     const spinnerElement = document.getElementById(this.loadingId);
     if (spinnerElement) {
@@ -242,6 +238,7 @@ export class BaseMap extends L.Map {
   }
 
   findRouteListener() {
+    const validateInputCity = (city: string) => city.replaceAll(" ", "_");
     const findRouteElement = document.getElementById(this.findRouteId);
     const [fromSelect, toSelect] = [
       <any>document.getElementById("fromDatalist"),
@@ -252,8 +249,8 @@ export class BaseMap extends L.Map {
         this.clearMarkers();
         this.clearUserMessage();
         this.addLoader();
-        const fromCity = BaseMap.validateInputCity(fromSelect.value);
-        const toCity = BaseMap.validateInputCity(toSelect.value);
+        const fromCity = validateInputCity(fromSelect.value);
+        const toCity = validateInputCity(toSelect.value);
         if (fromCity !== "" && toCity !== "") {
           const data = await getRoute(fromCity, toCity);
           this.vehicleRange = data.vehicle_range;

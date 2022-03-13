@@ -1,6 +1,11 @@
+const baseUrl =
+  process.env.NODE_ENV === "production"
+    ? "https://vehicle-network-api.azurewebsites.net/"
+    : "http://10.0.0.128:5000/";
+
 export async function getRoute(startCity: string, endCity: string) {
   try {
-    const url = `http://10.0.0.128:5000/api/getRoute/${startCity}/${endCity}`;
+    const url = `${baseUrl}api/getRoute/${startCity}/${endCity}`;
     const response = await fetch(url, { method: "GET" });
     const data = await response.json();
     const objData = JSON.parse(data);
@@ -16,7 +21,7 @@ export async function updateNetwork(
   region: string
 ) {
   try {
-    const url = `http://10.0.0.128:5000/api/updateNetwork/${fuelType}/${vehicleRange}/${region}`;
+    const url = `${baseUrl}api/updateNetwork/${fuelType}/${vehicleRange}/${region}`;
     const response = await fetch(url, { method: "PUT" });
     const data = await response.json();
     const objData = JSON.parse(data);
@@ -28,7 +33,7 @@ export async function updateNetwork(
 
 export async function getCityOptions() {
   try {
-    const url = `http://10.0.0.128:5000/api/getCityOptions`;
+    const url = `${baseUrl}api/getCityOptions`;
     const response = await fetch(url, { method: "GET" });
     const data = await response.json();
     const objData = JSON.parse(data);
@@ -40,7 +45,7 @@ export async function getCityOptions() {
 
 export async function getVehicleRange() {
   try {
-    const url = `http://10.0.0.128:5000/api/getVehicleRange`;
+    const url = `${baseUrl}api/getVehicleRange`;
     const response = await fetch(url, { method: "GET" });
     const data = await response.json();
     const objData = JSON.parse(data);

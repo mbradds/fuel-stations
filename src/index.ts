@@ -1,4 +1,3 @@
-import * as L from "leaflet";
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
 import { BaseMap } from "./modules/BaseMap";
 import { getCityOptions } from "./modules/routeData";

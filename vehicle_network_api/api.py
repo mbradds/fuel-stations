@@ -2,6 +2,8 @@ from flask import Flask
 from flask_restful import Resource, Api
 from flask_cors import CORS
 from waitress import serve
+import psutil
+import os
 from util import set_cwd_to_script
 from vehicle_network import VehicleNetwork
 
@@ -9,26 +11,26 @@ set_cwd_to_script()
 app = Flask(__name__)
 CORS(app, resources={r'/*': {'origins': '*'}})
 api = Api(app)
+process = psutil.Process(os.getpid())
 initpath = VehicleNetwork(vehicle_fuel="ELEC", region="CA", vehicle_range=300)
 
 
 class VehicleRouteService(Resource):
 
     def get(self, start_city, end_city):
-        print("here!")
         return initpath.shortest_path(start_city, end_city)
 
 
 class UpdateNetworkService(Resource):
 
     def put(self, f_type, vehicle_range, region):
-        newpath = VehicleNetwork(
+        global initpath
+        initpath = VehicleNetwork(
             vehicle_fuel=f_type,
             region=region,
             vehicle_range=int(vehicle_range)
         )
-        global initpath
-        initpath = newpath
+        return {"new_fuel": f_type, "new_range": vehicle_range, "new_region": region}
 
 
 class AvailableCitiesService(Resource):
@@ -41,6 +43,12 @@ class VehicleRangeService(Resource):
 
     def get(self):
         return initpath.vehicle_range
+
+
+class PrintMemory(Resource):
+
+    def get(self):
+        return {'memory': process.memory_info().rss}
 
 
 api.add_resource(
@@ -57,6 +65,10 @@ api.add_resource(
 
 api.add_resource(
     VehicleRangeService, "/api/getVehicleRange"
+)
+
+api.add_resource(
+    PrintMemory, "/api/memory"
 )
 
 if __name__ == "__main__":
