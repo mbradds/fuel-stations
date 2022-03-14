@@ -1,6 +1,6 @@
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
 import { BaseMap } from "./modules/BaseMap";
-import { getCityOptions } from "./modules/routeData";
+import { setInitialRoute, getCityOptions } from "./modules/routeData";
 import "leaflet/dist/leaflet.css";
 import "./css/main.css";
 
@@ -16,9 +16,15 @@ function setUpMap() {
 }
 
 async function main() {
-  const map = setUpMap();
-  const cityOptions = getCityOptions();
-  map.populateCityDropDowns(cityOptions);
+  // await setInitialRoute().then((response) => {
+  //   console.log(JSON.stringify(response));
+  //   const map = setUpMap();
+  //   const cityOptions = getCityOptions();
+  //   map.populateCityDropDowns(cityOptions);
+  // });
+  await setInitialRoute();
+  const cityOptions = await getCityOptions();
+  console.log(cityOptions);
 }
 
 main();

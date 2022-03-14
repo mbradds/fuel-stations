@@ -3,10 +3,28 @@ const baseUrl =
     ? "https://vehicle-network-api.azurewebsites.net/"
     : "http://10.0.0.128:5000/";
 
+export async function setInitialRoute() {
+  try {
+    const url = `${baseUrl}api/setInitialRoute`;
+    const response = await fetch(url, {
+      method: "GET",
+      credentials: "include",
+    });
+    const data = await response.json();
+    const objData = JSON.parse(data);
+    return objData;
+  } catch (err) {
+    return err;
+  }
+}
+
 export async function getRoute(startCity: string, endCity: string) {
   try {
     const url = `${baseUrl}api/getRoute/${startCity}/${endCity}`;
-    const response = await fetch(url, { method: "GET" });
+    const response = await fetch(url, {
+      method: "GET",
+      credentials: "include",
+    });
     const data = await response.json();
     const objData = JSON.parse(data);
     return objData;
@@ -22,7 +40,10 @@ export async function updateNetwork(
 ) {
   try {
     const url = `${baseUrl}api/updateNetwork/${fuelType}/${vehicleRange}/${region}`;
-    const response = await fetch(url, { method: "PUT" });
+    const response = await fetch(url, {
+      method: "PUT",
+      credentials: "include",
+    });
     const data = await response.json();
     const objData = JSON.parse(data);
     return objData;
@@ -34,7 +55,10 @@ export async function updateNetwork(
 export async function getCityOptions() {
   try {
     const url = `${baseUrl}api/getCityOptions`;
-    const response = await fetch(url, { method: "GET" });
+    const response = await fetch(url, {
+      method: "GET",
+      credentials: "include",
+    });
     const data = await response.json();
     const objData = JSON.parse(data);
     return objData;
@@ -46,7 +70,10 @@ export async function getCityOptions() {
 export async function getVehicleRange() {
   try {
     const url = `${baseUrl}api/getVehicleRange`;
-    const response = await fetch(url, { method: "GET" });
+    const response = await fetch(url, {
+      method: "GET",
+      credentials: "include",
+    });
     const data = await response.json();
     const objData = JSON.parse(data);
     return objData;

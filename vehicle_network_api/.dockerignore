@@ -9,4 +9,5 @@ node_modules
 **/.md
 */env
 __pycache__
+*/flask_session/*
 api_key.json

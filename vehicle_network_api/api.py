@@ -11,15 +11,26 @@ from vehicle_network import VehicleNetwork
 set_cwd_to_script()
 sess = Session()
 app = Flask(__name__)
-CORS(app, resources={r'/*': {'origins': '*'}})
+CORS(app, resources={r'/*': {'origins': '*', "allow_headers": "*",
+     "expose_headers": "*"}}, supports_credentials=True)
 process = psutil.Process(os.getpid())
+
+
+@app.after_request
+def add_header(response):
+    # response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers.add('Access-Control-Allow-Headers',
+                         "Origin, X-Requested-With, Content-Type, Accept, x-auth")
+
+    return response
 
 
 @app.route("/api/setInitialRoute")
 def set_initial_route():
-    session["initpath"] = VehicleNetwork(
-        vehicle_fuel="ELEC", region="CA", vehicle_range=300)
-    print("session path set", file=sys.stdout)
+    if session.get("initpath") is None:
+        session["initpath"] = VehicleNetwork(
+            vehicle_fuel="ELEC", region="CA", vehicle_range=300)
+        print("session path set", file=sys.stdout)
     return 'ok'
 
 
@@ -55,7 +66,7 @@ def get_memory():
 
 if __name__ == "__main__":
     app.secret_key = 'supersecretkey'
-    app.config['SESSION_TYPE'] = 'memcached'
+    app.config['SESSION_TYPE'] = 'filesystem'
     sess.init_app(app)
-    # app.run(host="0.0.0.0", port=5000, debug=True)
-    serve(app, host="0.0.0.0", port=5000)
+    app.run(host="0.0.0.0", port=5000, debug=True)
+    # serve(app, host="0.0.0.0", port=5000)
