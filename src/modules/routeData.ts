@@ -9,6 +9,9 @@ export async function setInitialRoute() {
     const response = await fetch(url, {
       method: "GET",
       credentials: "include",
+      headers: {
+        accepts: "application/json",
+      },
     });
     const data = await response.json();
     const objData = JSON.parse(data);
@@ -24,6 +27,9 @@ export async function getRoute(startCity: string, endCity: string) {
     const response = await fetch(url, {
       method: "GET",
       credentials: "include",
+      headers: {
+        accepts: "application/json",
+      },
     });
     const data = await response.json();
     const objData = JSON.parse(data);
@@ -43,6 +49,9 @@ export async function updateNetwork(
     const response = await fetch(url, {
       method: "PUT",
       credentials: "include",
+      headers: {
+        accepts: "application/json",
+      },
     });
     const data = await response.json();
     const objData = JSON.parse(data);
@@ -58,6 +67,9 @@ export async function getCityOptions() {
     const response = await fetch(url, {
       method: "GET",
       credentials: "include",
+      headers: {
+        accepts: "application/json",
+      },
     });
     const data = await response.json();
     const objData = JSON.parse(data);
@@ -73,6 +85,9 @@ export async function getVehicleRange() {
     const response = await fetch(url, {
       method: "GET",
       credentials: "include",
+      headers: {
+        accepts: "application/json",
+      },
     });
     const data = await response.json();
     const objData = JSON.parse(data);
