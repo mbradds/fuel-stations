@@ -1,7 +1,9 @@
-const baseUrl =
-  process.env.NODE_ENV === "production"
-    ? "https://vehicle-network-api.azurewebsites.net/"
-    : "http://10.0.0.128:5000/";
+// const baseUrl =
+//   process.env.NODE_ENV === "production"
+//     ? "https://vehicle-network-api.azurewebsites.net/"
+//     : "http://10.0.0.128:5000/";
+
+const baseUrl = "http://10.0.0.128:5000/";
 
 export async function setInitialRoute() {
   try {
@@ -9,9 +11,6 @@ export async function setInitialRoute() {
     const response = await fetch(url, {
       method: "GET",
       credentials: "include",
-      headers: {
-        accepts: "application/json",
-      },
     });
     const data = await response.json();
     const objData = JSON.parse(data);
@@ -67,13 +66,11 @@ export async function getCityOptions() {
     const response = await fetch(url, {
       method: "GET",
       credentials: "include",
-      headers: {
-        accepts: "application/json",
-      },
     });
     const data = await response.json();
-    const objData = JSON.parse(data);
-    return objData;
+    return data;
+    // const objData = JSON.parse(data);
+    // return objData;
   } catch (err) {
     return err;
   }
