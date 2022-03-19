@@ -2,7 +2,7 @@
   "compilerOptions": {
     "outDir": "./dist/",
     "lib": ["ES2021", "DOM"],
-    "noImplicitAny": true,
+    "noImplicitAny": false,
     "module": "ESNext",
     "target": "es5",
     "allowJs": true,
@@ -11,7 +11,7 @@
     "resolveJsonModule": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
-    "strict": true
+    "strict": false
   },
   "ts-node": {
     "compilerOptions": {

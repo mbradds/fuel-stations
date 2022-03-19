@@ -10,14 +10,17 @@ from util import set_cwd_to_script
 from vehicle_network import VehicleNetwork
 
 set_cwd_to_script()
-sess = Session()
 app = Flask(__name__)
+app.config['SESSION_TYPE'] = 'filesystem'
+sess = Session()
 CORS(app,
-    #  resources={r"*": {"origins": ["http://localhost:8080"]}},
+     origins=["http://localhost:8080"],
+     expose_headers=['Access-Control-Allow-Origin'],
      supports_credentials=True)
 app.secret_key = 'supersecretkey'
-app.config['SESSION_TYPE'] = 'filesystem'
-app.config.update(SESSION_COOKIE_SAMESITE="None", SESSION_COOKIE_SECURE=True)
+
+app.config.update(SESSION_COOKIE_HTTPONLY=False,
+                  SESSION_COOKIE_SAMESITE="None", SESSION_COOKIE_SECURE=True)
 sess.init_app(app)
 # app.config.update(
 #     SECRET_KEY="secret_sauce",
@@ -42,7 +45,6 @@ def set_initial_route():
     if not "initpath" in session:
         session["initpath"] = VehicleNetwork(
             vehicle_fuel="ELEC", region="CA", vehicle_range=300)
-        session.modified = True
         print("session path set", file=sys.stdout)
     else:
         session["initpath"] = session.get("initpath")

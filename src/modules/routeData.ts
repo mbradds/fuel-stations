@@ -1,20 +1,32 @@
+import axios from "axios";
+axios.defaults.withCredentials = true;
+
 // const baseUrl =
 //   process.env.NODE_ENV === "production"
 //     ? "https://vehicle-network-api.azurewebsites.net/"
 //     : "http://10.0.0.128:5000/";
 
-const baseUrl = "http://10.0.0.128:5000/";
+const baseUrl = "http://localhost:5000/";
 
 export async function setInitialRoute() {
+  // try {
+  //   const url = `${baseUrl}api/setInitialRoute`;
+  //   const response = await fetch(url, {
+  //     method: "GET",
+  //     credentials: "include",
+  //   });
+  //   const data = await response.json();
+  //   const objData = JSON.parse(data);
+  //   return objData;
+  // } catch (err) {
+  //   return err;
+  // }
+
   try {
     const url = `${baseUrl}api/setInitialRoute`;
-    const response = await fetch(url, {
-      method: "GET",
-      credentials: "include",
-    });
-    const data = await response.json();
-    const objData = JSON.parse(data);
-    return objData;
+    const response = await axios.get(url, { withCredentials: true });
+    console.log(response);
+    return response;
   } catch (err) {
     return err;
   }
@@ -61,16 +73,25 @@ export async function updateNetwork(
 }
 
 export async function getCityOptions() {
+  // try {
+  //   const url = `${baseUrl}api/getCityOptions`;
+  //   const response = await fetch(url, {
+  //     method: "GET",
+  //     credentials: "include",
+  //   });
+  //   const data = await response.json();
+  //   return data;
+  //   // const objData = JSON.parse(data);
+  //   // return objData;
+  // } catch (err) {
+  //   return err;
+  // }
+
   try {
     const url = `${baseUrl}api/getCityOptions`;
-    const response = await fetch(url, {
-      method: "GET",
-      credentials: "include",
-    });
-    const data = await response.json();
-    return data;
-    // const objData = JSON.parse(data);
-    // return objData;
+    const response = await axios.get(url, { withCredentials: true });
+    console.log(response);
+    return response;
   } catch (err) {
     return err;
   }
