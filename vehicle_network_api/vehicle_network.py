@@ -1,7 +1,6 @@
 import networkx as nx
 import random
 import warnings
-import json
 from graph_data import Data
 
 
@@ -97,7 +96,7 @@ class VehicleNetwork(Data):
         options = [city+","+state for city,
                    state in zip(self.stations["city"], self.stations["state"])]
         options = sorted(list(set(options)))
-        return json.dumps(options)
+        return options
 
     def vehicle_route(self):
         remove_list = []
@@ -163,7 +162,6 @@ class VehicleNetwork(Data):
             path_data["total_distance"] = None
             # TODO: raise a warning that the route didnt work, and then inform the user that a new path is being calculated with a higher range!
 
-        path_data = json.dumps(path_data)
         return path_data
 
 

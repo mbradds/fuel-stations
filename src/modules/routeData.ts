@@ -1,53 +1,34 @@
-import axios from "axios";
-axios.defaults.withCredentials = true;
+const baseUrl =
+  process.env.NODE_ENV === "production"
+    ? "https://vehicle-network-api.azurewebsites.net/"
+    : "http://localhost:5000/";
 
-// const baseUrl =
-//   process.env.NODE_ENV === "production"
-//     ? "https://vehicle-network-api.azurewebsites.net/"
-//     : "http://10.0.0.128:5000/";
-
-const baseUrl = "http://localhost:5000/";
-
-export async function setInitialRoute() {
-  // try {
-  //   const url = `${baseUrl}api/setInitialRoute`;
-  //   const response = await fetch(url, {
-  //     method: "GET",
-  //     credentials: "include",
-  //   });
-  //   const data = await response.json();
-  //   const objData = JSON.parse(data);
-  //   return objData;
-  // } catch (err) {
-  //   return err;
-  // }
-
+async function sendFetch(url: string, method: string) {
   try {
-    const url = `${baseUrl}api/setInitialRoute`;
-    const response = await axios.get(url, { withCredentials: true });
-    console.log(response);
-    return response;
-  } catch (err) {
-    return err;
-  }
-}
-
-export async function getRoute(startCity: string, endCity: string) {
-  try {
-    const url = `${baseUrl}api/getRoute/${startCity}/${endCity}`;
     const response = await fetch(url, {
-      method: "GET",
+      method: method,
       credentials: "include",
       headers: {
         accepts: "application/json",
       },
     });
     const data = await response.json();
-    const objData = JSON.parse(data);
-    return objData;
+    return data;
   } catch (err) {
     return err;
   }
+}
+
+export async function setInitialRoute() {
+  const url = `${baseUrl}api/setInitialRoute`;
+  const response = await sendFetch(url, "GET");
+  return response;
+}
+
+export async function getRoute(startCity: string, endCity: string) {
+  const url = `${baseUrl}api/getRoute/${startCity}/${endCity}`;
+  const response = await sendFetch(url, "GET");
+  return response;
 }
 
 export async function updateNetwork(
@@ -55,62 +36,19 @@ export async function updateNetwork(
   vehicleRange: number,
   region: string
 ) {
-  try {
-    const url = `${baseUrl}api/updateNetwork/${fuelType}/${vehicleRange}/${region}`;
-    const response = await fetch(url, {
-      method: "PUT",
-      credentials: "include",
-      headers: {
-        accepts: "application/json",
-      },
-    });
-    const data = await response.json();
-    const objData = JSON.parse(data);
-    return objData;
-  } catch (err) {
-    return err;
-  }
+  const url = `${baseUrl}api/updateNetwork/${fuelType}/${vehicleRange}/${region}`;
+  const response = await sendFetch(url, "PUT");
+  return response;
 }
 
 export async function getCityOptions() {
-  // try {
-  //   const url = `${baseUrl}api/getCityOptions`;
-  //   const response = await fetch(url, {
-  //     method: "GET",
-  //     credentials: "include",
-  //   });
-  //   const data = await response.json();
-  //   return data;
-  //   // const objData = JSON.parse(data);
-  //   // return objData;
-  // } catch (err) {
-  //   return err;
-  // }
-
-  try {
-    const url = `${baseUrl}api/getCityOptions`;
-    const response = await axios.get(url, { withCredentials: true });
-    console.log(response);
-    return response;
-  } catch (err) {
-    return err;
-  }
+  const url = `${baseUrl}api/getCityOptions`;
+  const response = await sendFetch(url, "GET");
+  return response;
 }
 
 export async function getVehicleRange() {
-  try {
-    const url = `${baseUrl}api/getVehicleRange`;
-    const response = await fetch(url, {
-      method: "GET",
-      credentials: "include",
-      headers: {
-        accepts: "application/json",
-      },
-    });
-    const data = await response.json();
-    const objData = JSON.parse(data);
-    return objData;
-  } catch (err) {
-    return err;
-  }
+  const url = `${baseUrl}api/getVehicleRange`;
+  const response = await sendFetch(url, "GET");
+  return response;
 }

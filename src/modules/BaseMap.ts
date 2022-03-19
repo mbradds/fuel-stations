@@ -158,7 +158,7 @@ export class BaseMap extends L.Map {
     this.clearUserMessage();
   }
 
-  async addOptionFormHtml() {
+  addOptionFormHtml() {
     const optionFormDiv = document.getElementById(this.optionFormId);
     const btnHtml = (id: string, text: string) =>
       `<button id="${id}" type="button" class="btn btn-secondary">${text}</button>`;
@@ -169,9 +169,7 @@ export class BaseMap extends L.Map {
     <button type="button" class="btn btn-secondary" value="NA">NA</button>
   </div>`;
 
-    const serverVehicleRange = await getVehicleRange();
-    this.vehicleRange = parseInt(serverVehicleRange);
-    const rangeHtml = `<div id="range-holder"><label for="${this.rangeId}" class="form-label"><span id="vehicle-range-title">Vehicle Range (${serverVehicleRange} km)</span></label>
+    const rangeHtml = `<div id="range-holder"><label for="${this.rangeId}" class="form-label"><span id="vehicle-range-title">Vehicle Range (${this.vehicleRange} km)</span></label>
     <input type="range" class="form-range" min="100" max="700" value="${this.vehicleRange}" id="${this.rangeId}"></div>`;
 
     const routeNotFoundHtml = `<div id="${this.routeNotFoundId}"> </div>`;
