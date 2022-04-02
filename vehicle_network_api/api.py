@@ -12,6 +12,7 @@ from vehicle_network import VehicleNetwork
 set_cwd_to_script()
 app = Flask(__name__)
 app.config['SESSION_TYPE'] = 'filesystem'
+app.config['SESSION_PERMANENT'] = False
 sess = Session()
 CORS(app,
      origins=["http://localhost:8080"],

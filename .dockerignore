@@ -6,7 +6,8 @@
 **/compose*
 **/Dockerfile*
 **/node_modules
+**/vehicle_network_api
 **/npm-debug.log
 **/.md
-node_modules
+**/dist
 api_key.json

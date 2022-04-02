@@ -1,13 +1,13 @@
 **/.git
 **/.gitignore
-node_modules
 **/docker-compose*
 **/compose*
 **/Dockerfile*
 **/node_modules
 **/npm-debug.log
 **/.md
-*/env
+**/env
+**/dist
 __pycache__
-*/flask_session/*
+**/flask_session
 api_key.json

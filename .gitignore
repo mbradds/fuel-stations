@@ -1,8 +1,8 @@
-node_modules
-dist
+**/node_modules
+**/dist
 */env
 *.pyo
-*/flask_session/*
+**/flask_session
 *.pyc
 __pycache__
 api_key.json
