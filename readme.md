@@ -62,11 +62,11 @@ Run containers
 docker-compose up
 ```
 
-Save conda environment
+Save pip environment
 
 ```bash
 cd vehicle_network_api
-conda env export --from-history > environment.yml
+pip3 freeze > requirements.txt
 ```
 
 Get docker image size

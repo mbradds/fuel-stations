@@ -73,7 +73,7 @@ class Data:
                 else:
                     network = Data(vehicle_fuel=fuel, region=country)
                     network.create_graph()
-    
+
     @staticmethod
     def file_name(vehicle_fuel, region):
         return('nx_pickles/'+vehicle_fuel+'_'+region+'_'+'Max_'+str(Data.max_range)+'_'+'Min_'+str(Data.min_range)+'.pickle')
