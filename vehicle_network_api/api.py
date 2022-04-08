@@ -1,5 +1,6 @@
 from flask import Flask, session
 from flask_session import Session
+import redis
 import json
 from flask_cors import CORS
 from waitress import serve
@@ -11,7 +12,8 @@ from vehicle_network import VehicleNetwork
 
 set_cwd_to_script()
 app = Flask(__name__)
-app.config['SESSION_TYPE'] = 'filesystem'
+app.config['SESSION_TYPE'] = 'redis'
+app.config['SESSION_REDIS'] = redis.from_url('redis://localhost:6379')
 app.config['SESSION_PERMANENT'] = False
 sess = Session()
 CORS(app,
