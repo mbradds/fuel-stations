@@ -6,7 +6,7 @@ const __dirname = path.resolve();
 const port = process.env.PORT || 8080;
 const app = express();
 
-function shouldCompress(req: any, res: any) {
+function shouldCompress(req, res) {
   if (req.headers["x-no-compression"]) {
     // don't compress responses with this request header
     return false;
@@ -15,7 +15,7 @@ function shouldCompress(req: any, res: any) {
   return compression.filter(req, res);
 }
 
-function cachePolicy(req: any, res: any, next: any) {
+function cachePolicy(req, res, next) {
   const periodLong = 31536000; // 1 year
   const contentHash = new RegExp("\\.[0-9a-f]{20}\\.");
   if (req.method === "GET") {

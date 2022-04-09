@@ -9,7 +9,6 @@ from vehicle_network import VehicleNetwork
 
 set_cwd_to_script()
 app = Flask(__name__)
-r = redis.Redis(host='localhost', port=6379, db=0)
 CORS(app,
      origins="*",
      expose_headers=['Access-Control-Allow-Origin'],
