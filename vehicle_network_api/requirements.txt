@@ -8,7 +8,6 @@ decorator==4.4.2
 Deprecated==1.2.13
 Flask==2.0.3
 Flask-Cors==3.0.10
-Flask-Session==0.4.0
 idna==3.3
 itsdangerous==2.1.1
 Jinja2==3.0.3

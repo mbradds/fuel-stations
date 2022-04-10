@@ -1,10 +1,5 @@
 import * as L from "leaflet";
-import {
-  getRoute,
-  updateNetwork,
-  getVehicleRange,
-  getCityOptions,
-} from "./routeData";
+import { getRoute, updateNetwork, getCityOptions } from "./routeData";
 import { btnGroupClick } from "./util";
 import { RouteApiResponse } from "./interfaces";
 
@@ -34,17 +29,29 @@ interface InitZooms extends InitZoomsKeys {
 
 export class BaseMap extends L.Map {
   resetBtnId: string;
+
   optionFormId: string;
+
   selectFromCityId: string;
+
   selectToCityId: string;
+
   findRouteId: string;
+
   loadingId: string;
+
   rangeId: string;
+
   routeNotFoundId: string;
+
   vehicleRange: number;
+
   region: string;
+
   markerFeature: undefined | L.FeatureGroup;
+
   initZooms: InitZooms;
+
   config: Config;
 
   constructor(
@@ -93,12 +100,27 @@ export class BaseMap extends L.Map {
     }, 0);
   }
 
+  static resetCityDropdowns() {
+    ["fromDatalist", "toDatalist"].forEach((element) => {
+      const citylists: any = document.getElementById(element);
+      if (citylists) {
+        citylists.value = "";
+      }
+    });
+  }
+
+  static getSpinnerHtml(id: string) {
+    return `<div id="${id}"> <div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div></div>
+  `;
+  }
+
   resetListener() {
     const resetMapElement = document.getElementById(this.resetBtnId);
     const routeNotFoundElement = document.getElementById(this.routeNotFoundId);
     if (resetMapElement) {
       resetMapElement.addEventListener("click", () => {
         this.clearMarkers();
+        BaseMap.resetCityDropdowns();
         this.setView(this.initZooms[this.region], this.config.initZoomLevel);
         if (routeNotFoundElement) {
           routeNotFoundElement.innerHTML = "";
@@ -115,11 +137,6 @@ export class BaseMap extends L.Map {
       });
       this.markerFeature = undefined;
     }
-  }
-
-  getSpinnerHtml(id: string) {
-    return `<div id="${id}"> <div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div></div>
-  `;
   }
 
   setRangeLabel() {
@@ -142,6 +159,7 @@ export class BaseMap extends L.Map {
   }
 
   async updateServerGraph() {
+    BaseMap.resetCityDropdowns();
     this.clearMarkers();
     this.clearUserMessage();
     this.addLoader();
@@ -175,9 +193,9 @@ export class BaseMap extends L.Map {
     const routeNotFoundHtml = `<div id="${this.routeNotFoundId}"> </div>`;
 
     if (optionFormDiv) {
-      optionFormDiv.innerHTML = `${regionBtnGroupHtml} ${this.getSpinnerHtml(
+      optionFormDiv.innerHTML = `${regionBtnGroupHtml} ${BaseMap.getSpinnerHtml(
         this.selectFromCityId
-      )} ${this.getSpinnerHtml(this.selectToCityId)} ${rangeHtml} ${btnHtml(
+      )} ${BaseMap.getSpinnerHtml(this.selectToCityId)} ${rangeHtml} ${btnHtml(
         this.findRouteId,
         "Find Route"
       )}<div id="${this.loadingId}" ></div>${routeNotFoundHtml}`;
@@ -224,7 +242,7 @@ export class BaseMap extends L.Map {
   addLoader() {
     const spinnerElement = document.getElementById(this.loadingId);
     if (spinnerElement) {
-      spinnerElement.innerHTML = this.getSpinnerHtml("");
+      spinnerElement.innerHTML = BaseMap.getSpinnerHtml("");
     }
   }
 
@@ -296,16 +314,16 @@ export class BaseMap extends L.Map {
 
   addRoute(routeData: RouteApiResponse) {
     if (routeData.route_found) {
-      const markers = routeData.detailed_path.map((stop) => {
-        return L.marker([stop.lat, stop.lng], {
+      const markers = routeData.detailed_path.map((stop) =>
+        L.marker([stop.lat, stop.lng], {
           icon: L.icon({
             iconUrl: "./images/marker-icon.png",
             iconAnchor: [10, 40],
           }),
         })
           .bindPopup(`${stop.node}`)
-          .addTo(this);
-      });
+          .addTo(this)
+      );
       const markerFeature = new L.FeatureGroup(markers);
       this.flyToBounds(markerFeature.getBounds(), {
         duration: 0.25,

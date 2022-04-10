@@ -6,7 +6,7 @@ const baseUrl =
 async function sendFetch(url: string, method: string) {
   try {
     const response = await fetch(url, {
-      method: method,
+      method,
       credentials: "include",
       headers: {
         accepts: "application/json",

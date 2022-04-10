@@ -14,13 +14,17 @@ CORS(app,
      expose_headers=['Access-Control-Allow-Origin'],
      supports_credentials=True)
 process = psutil.Process(os.getpid())
-
+vehicle_fuel = "ELEC"
+region = "CA"
+vehicle_range = 300
 path = VehicleNetwork(
-    vehicle_fuel="ELEC", region="CA", vehicle_range=300)
+    vehicle_fuel=vehicle_fuel, region=region, vehicle_range=vehicle_range)
 
 
 @app.route("/api/setInitialRoute", methods=["GET"])
 def set_initial_route():
+    if path.vehicle_fuel != vehicle_fuel or path.region != region or path.vehicle_range != vehicle_range:
+        update_network(vehicle_fuel, vehicle_range, region)
     return "ok"
 
 
