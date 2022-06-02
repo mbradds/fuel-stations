@@ -23,6 +23,6 @@ pytz==2021.3
 requests==2.27.1
 six==1.16.0
 urllib3==1.26.8
-waitress==2.1.1
+waitress==2.1.2
 Werkzeug==2.0.3
 wrapt==1.14.0
